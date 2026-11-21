@@ -6,18 +6,18 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
   Briefcase,
-  HelpCircle,
   Clock,
   MessageSquare,
   Sparkles,
   Check,
   ListOrdered,
+  ArrowRight,
+  ShieldCheck,
 } from 'lucide-react';
 
 import { useConfigStore, useResumeStore, useInterviewStore } from '@/store';
 import {
   APP_CONFIG,
-  AVAILABLE_GROQ_MODELS,
   STANDARD_ROLES,
   QUESTION_COUNT_OPTIONS,
   INSTRUCTION_PRESETS,
@@ -262,7 +262,7 @@ export const SetupForm: React.FC = () => {
             name="questionCount"
             control={control}
             render={({ field }) => (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {QUESTION_COUNT_OPTIONS.map((opt) => {
                   const isSelected = field.value === opt.count;
                   return (
@@ -270,26 +270,34 @@ export const SetupForm: React.FC = () => {
                       type="button"
                       key={opt.count}
                       onClick={() => field.onChange(opt.count)}
-                      className={`p-3 rounded border text-left transition-colors cursor-pointer ${
+                      className={`p-3.5 rounded border text-left transition-all cursor-pointer relative ${
                         isSelected
-                          ? 'border-accent bg-accent-surface'
-                          : 'border-border-subtle hover:border-border-strong bg-canvas'
+                          ? 'border-slate-900 bg-slate-900 text-white shadow-md ring-2 ring-slate-900/25'
+                          : 'border-border-strong bg-surface hover:border-slate-400 text-text-primary hover:bg-surface-elevated shadow-xs'
                       }`}
                     >
-                      <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center justify-between mb-1.5">
                         <span
-                          className={`font-medium text-xs ${
-                            isSelected ? 'text-accent-text' : 'text-text-primary'
+                          className={`font-bold text-sm ${
+                            isSelected ? 'text-white' : 'text-text-primary'
                           }`}
                         >
                           {opt.label}
                         </span>
-                        {isSelected && (
-                          <Check className="h-3.5 w-3.5 text-accent-text shrink-0" />
+                        {isSelected ? (
+                          <span className="h-4 w-4 rounded-full bg-white text-slate-900 flex items-center justify-center shrink-0 shadow-xs">
+                            <Check className="h-3 w-3 stroke-[3]" />
+                          </span>
+                        ) : (
+                          <span className="h-4 w-4 rounded-full border border-border-strong shrink-0" />
                         )}
                       </div>
-                      <div className="flex items-center gap-1 text-[11px] text-text-muted">
-                        <Clock className="h-3 w-3 text-text-muted" />
+                      <div
+                        className={`flex items-center gap-1.5 text-xs ${
+                          isSelected ? 'text-slate-300 font-medium' : 'text-text-muted'
+                        }`}
+                      >
+                        <Clock className={`h-3 w-3 ${isSelected ? 'text-slate-300' : 'text-text-muted'}`} />
                         <span>{opt.duration}</span>
                       </div>
                     </button>
@@ -348,7 +356,7 @@ export const SetupForm: React.FC = () => {
           </div>
         </div>
 
-        {/* SECTION 5: GROQ CREDENTIALS & MODEL */}
+        {/* SECTION 5: GROQ CREDENTIALS */}
         <div className="space-y-3">
           <Controller
             name="groqApiKey"
@@ -361,46 +369,22 @@ export const SetupForm: React.FC = () => {
               />
             )}
           />
-
-          <div className="space-y-1 pt-1">
-            <label htmlFor="groqModel" className="block text-xs font-medium text-text-secondary">
-              Inference model
-            </label>
-            <div className="relative">
-              <select
-                id="groqModel"
-                {...register('groqModel')}
-                className="w-full appearance-none rounded border border-border-subtle bg-canvas px-3 py-2 text-xs text-text-primary focus:border-border-focus focus:outline-none cursor-pointer"
-              >
-                {AVAILABLE_GROQ_MODELS.map((m) => (
-                  <option key={m.id} value={m.id} className="bg-surface text-text-primary">
-                    {m.label} ({m.id})
-                  </option>
-                ))}
-              </select>
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted text-[10px]">
-                ▼
-              </div>
-            </div>
-            <p className="text-[11px] text-text-muted">
-              Auto-fallback routes to an accessible model if the chosen model is unavailable on your tier.
-            </p>
-          </div>
         </div>
 
-        {/* SUBMIT BUTTON */}
-        <div className="pt-4 border-t border-border-subtle flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-1.5 text-xs text-text-muted">
-            <HelpCircle className="h-3.5 w-3.5 text-text-muted shrink-0" />
-            <span>Session parameters reside exclusively in browser memory.</span>
+        {/* SUBMIT BUTTON CTA */}
+        <div className="pt-6 border-t border-border-subtle flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-2 text-xs text-text-secondary">
+            <ShieldCheck className="h-4 w-4 text-status-success shrink-0" />
+            <span>Session parameters and credentials reside exclusively in local browser memory.</span>
           </div>
 
           <Button
             type="submit"
-            size="md"
+            size="lg"
             variant="primary"
             isLoading={isSubmitting}
-            className="w-full sm:w-auto"
+            className="w-full sm:w-auto px-8 py-3.5 bg-slate-900 hover:bg-black text-white font-semibold text-base shadow-md hover:shadow-lg transition-all rounded cursor-pointer"
+            rightIcon={<ArrowRight className="h-4 w-4 text-white" />}
           >
             Start interview
           </Button>

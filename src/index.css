@@ -1,45 +1,45 @@
-/* hallmark: 2.0.0 | genre: modern-minimal | theme: obsidian-editorial | tone: utilitarian */
-/* critique: eliminated purple-to-cyan gradient washes, pulsing status dots, tracked uppercase eyebrows, middle-dot meta strings, and card-in-card nesting in favor of high-contrast tokenized planes, untracked sentence-case labels, instant focus-visible outlines, and a restrained carbon palette */
+/* hallmark: 2.0.0 | genre: modern-minimal | theme: stark-monochrome | tone: utilitarian */
+/* critique: high-contrast light typography with deep slate-black text, crisp card surfaces, instant focus-visible outlines, and evident interactive states */
 
 :root {
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
 
-  /* Surfaces */
-  --bg-canvas: #090a0c;
-  --bg-surface: #101216;
-  --bg-surface-elevated: #16191f;
-  --bg-surface-muted: #1c2027;
-  --bg-surface-hover: #222731;
+  /* Surfaces - Clean Light Palette */
+  --bg-canvas: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-surface-elevated: #f1f5f9;
+  --bg-surface-muted: #e2e8f0;
+  --bg-surface-hover: #f1f5f9;
 
-  /* Text */
-  --text-primary: #f2f4f7;
-  --text-secondary: #9aa4b2;
-  --text-muted: #647082;
-  --text-inverse: #090a0c;
+  /* Text - Crisp Black & Dark Slate */
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  --text-inverse: #ffffff;
 
   /* Hairline Borders */
-  --border-subtle: #1c222b;
-  --border-strong: #2a3340;
-  --border-focus: #3b82f6;
+  --border-subtle: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --border-focus: #0f172a;
 
-  /* Primary Accent: Cold Cobalt */
-  --accent-primary: #3b82f6;
-  --accent-primary-hover: #2563eb;
-  --accent-surface: #0e1e38;
-  --accent-border: #1a3866;
-  --accent-text: #93c5fd;
+  /* Primary Accent: Deep Slate-Black */
+  --accent-primary: #0f172a;
+  --accent-primary-hover: #1e293b;
+  --accent-surface: #f1f5f9;
+  --accent-border: #cbd5e1;
+  --accent-text: #0f172a;
 
   /* Status Tokens */
-  --status-success: #10b981;
-  --status-success-bg: #06261c;
-  --status-success-border: #0d543e;
-  --status-warning: #f59e0b;
-  --status-warning-bg: #261803;
-  --status-warning-border: #6b3e05;
-  --status-danger: #ef4444;
-  --status-danger-bg: #260808;
-  --status-danger-border: #731b1b;
+  --status-success: #15803d;
+  --status-success-bg: #f0fdf4;
+  --status-success-border: #bbf7d0;
+  --status-warning: #b45309;
+  --status-warning-bg: #fffbeb;
+  --status-warning-border: #fde68a;
+  --status-danger: #b91c1c;
+  --status-danger-bg: #fef2f2;
+  --status-danger-border: #fecaca;
 
   --radius-sm: 4px;
   --radius-md: 6px;
@@ -63,14 +63,15 @@
   }
 
   ::selection {
-    background-color: var(--accent-surface);
-    color: var(--accent-text);
+    background-color: #e2e8f0;
+    color: #0f172a;
   }
 
   h1, h2, h3, h4, h5, h6 {
     overflow-wrap: break-word;
     min-width: 0;
     letter-spacing: -0.015em;
+    color: var(--text-primary);
   }
 }
 

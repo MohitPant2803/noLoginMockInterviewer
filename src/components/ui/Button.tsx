@@ -30,15 +30,15 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     const variants = {
       primary:
-        'bg-accent text-white hover:bg-accent-hover active:brightness-95',
+        'bg-slate-900 text-white hover:bg-black active:scale-[0.99] shadow-sm font-semibold',
       secondary:
-        'bg-surface-elevated text-text-primary border border-border-subtle hover:bg-surface-hover hover:border-border-strong',
+        'bg-surface text-text-primary border border-border-strong hover:bg-surface-elevated hover:border-text-secondary shadow-xs',
       outline:
-        'border border-border-strong bg-transparent text-text-secondary hover:bg-surface-muted hover:text-text-primary',
+        'border border-border-strong bg-transparent text-text-primary hover:bg-surface-muted hover:text-text-primary',
       ghost:
         'bg-transparent text-text-secondary hover:bg-surface-muted hover:text-text-primary',
       danger:
-        'bg-status-danger text-white hover:brightness-110 active:brightness-90',
+        'bg-status-danger text-white hover:brightness-110 active:brightness-90 font-medium',
     };
 
     const sizes = {

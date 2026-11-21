@@ -13,12 +13,12 @@ export const RootLayout: React.FC = () => {
       </main>
       <Footer />
       <Toaster
-        theme="dark"
+        theme="light"
         position="top-right"
         richColors
         closeButton
         toastOptions={{
-          className: 'bg-surface border border-border-strong text-text-primary rounded text-xs',
+          className: 'bg-white border border-border-strong text-text-primary shadow-md rounded text-xs',
         }}
       />
     </div>
