@@ -18,6 +18,7 @@ export default defineConfig({
           ui: ['lucide-react', 'sonner'],
           forms: ['react-hook-form', 'zod', '@hookform/resolvers'],
           parsers: ['pdfjs-dist', 'mammoth'],
+          pdfExport: ['jspdf', 'jspdf-autotable'],
         },
       },
     },
