@@ -1,6 +1,7 @@
 export const APP_CONFIG = {
   appName: import.meta.env.VITE_APP_NAME || 'AI Mock Interviewer',
   defaultGroqModel: import.meta.env.VITE_GROQ_DEFAULT_MODEL || 'openai/gpt-oss-120b',
+  groqApiKey: import.meta.env.VITE_GROQ_API_KEY || '',
   defaultQuestionCount: 5,
   supportedQuestionCounts: [5, 10, 15, 20] as const,
   supportedFileTypes: ['.pdf', '.docx'] as const,

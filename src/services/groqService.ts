@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { APP_CONFIG } from '@/lib/constants';
 import type {
   InterviewConfig,
   ResumeData,
@@ -98,13 +99,14 @@ class GroqApiError extends Error {
 async function groqRequest(opts: GroqRequestOptions): Promise<string> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const effectiveApiKey = (opts.apiKey || APP_CONFIG.groqApiKey || '').trim();
 
   try {
     const response = await fetch(GROQ_API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${opts.apiKey}`,
+        Authorization: `Bearer ${effectiveApiKey}`,
       },
       body: JSON.stringify({
         model: opts.model,

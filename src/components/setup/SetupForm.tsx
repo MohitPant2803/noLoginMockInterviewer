@@ -12,7 +12,6 @@ import {
   Check,
   ListOrdered,
   ArrowRight,
-  ShieldCheck,
 } from 'lucide-react';
 
 import { useConfigStore, useResumeStore, useInterviewStore } from '@/store';
@@ -24,7 +23,6 @@ import {
 } from '@/lib/constants';
 import { Button, Input, Textarea } from '@/components/ui';
 import { ResumeInput } from './ResumeInput';
-import { ApiKeyInput } from './ApiKeyInput';
 
 const formSchema = z
   .object({
@@ -39,16 +37,7 @@ const formSchema = z
       .string()
       .max(600, 'Additional instructions must be 600 characters or less')
       .optional(),
-    groqApiKey: z
-      .string()
-      .trim()
-      .min(1, 'Groq API key is required')
-      .refine((val) => val.startsWith('gsk_'), {
-        message: 'Groq API keys typically begin with "gsk_"',
-      })
-      .refine((val) => val.length >= 20, {
-        message: 'Please enter a valid, complete Groq API key',
-      }),
+    groqApiKey: z.string().optional(),
     groqModel: z.string().optional(),
   })
   .superRefine((data, ctx) => {
@@ -109,7 +98,7 @@ export const SetupForm: React.FC = () => {
       customRole: defaultCustomRole,
       questionCount: currentConfig?.questionCount || 5,
       additionalInstructions: currentConfig?.additionalInstructions || '',
-      groqApiKey: currentConfig?.groqApiKey || '',
+      groqApiKey: currentConfig?.groqApiKey || APP_CONFIG.groqApiKey || '',
       groqModel: currentConfig?.groqModel || APP_CONFIG.defaultGroqModel,
     },
   });
@@ -151,12 +140,19 @@ export const SetupForm: React.FC = () => {
       fileType: selectedFile?.type || currentResume?.fileType,
     });
 
-    // 4. Save Config to Zustand store (Groq key in memory only)
+    const resolvedApiKey = (
+      data.groqApiKey?.trim() ||
+      currentConfig?.groqApiKey ||
+      APP_CONFIG.groqApiKey ||
+      ''
+    ).trim();
+
+    // 4. Save Config to Zustand store
     setConfig({
       jobRole: finalJobRole,
       questionCount: data.questionCount,
       additionalInstructions: data.additionalInstructions?.trim() || '',
-      groqApiKey: data.groqApiKey.trim(),
+      groqApiKey: resolvedApiKey,
       groqModel: data.groqModel || APP_CONFIG.defaultGroqModel,
     });
 
@@ -356,28 +352,8 @@ export const SetupForm: React.FC = () => {
           </div>
         </div>
 
-        {/* SECTION 5: GROQ CREDENTIALS */}
-        <div className="space-y-3">
-          <Controller
-            name="groqApiKey"
-            control={control}
-            render={({ field }) => (
-              <ApiKeyInput
-                value={field.value}
-                onChange={field.onChange}
-                error={errors.groqApiKey?.message}
-              />
-            )}
-          />
-        </div>
-
         {/* SUBMIT BUTTON CTA */}
-        <div className="pt-6 border-t border-border-subtle flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-2 text-xs text-text-secondary">
-            <ShieldCheck className="h-4 w-4 text-status-success shrink-0" />
-            <span>Session parameters and credentials reside exclusively in local browser memory.</span>
-          </div>
-
+        <div className="pt-6 border-t border-border-subtle flex items-center justify-end">
           <Button
             type="submit"
             size="lg"

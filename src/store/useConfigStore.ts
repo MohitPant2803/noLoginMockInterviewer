@@ -32,6 +32,7 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
 
   hasValidConfig: () => {
     const config = get().config;
-    return Boolean(config && config.jobRole.trim() && config.groqApiKey.trim());
+    const apiKey = config?.groqApiKey?.trim() || APP_CONFIG.groqApiKey;
+    return Boolean(config && config.jobRole.trim() && apiKey);
   },
 }));
