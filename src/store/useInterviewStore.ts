@@ -154,7 +154,7 @@ export const useInterviewStore = create<InterviewState>((set) => ({
         status: 'in_progress',
         startedAt: new Date().toISOString(),
         questions,
-        mainQuestionCount: questions.length,
+        mainQuestionCount: questions.filter((q) => !q.isFollowUp).length,
         mainQuestionsAsked: 1,
       },
     }),

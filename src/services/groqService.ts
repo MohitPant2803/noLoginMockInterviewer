@@ -267,6 +267,48 @@ export interface GenerateReportParams {
   durationMinutes: number;
 }
 
+function getCuratedQuestionsForRole(role: string): Array<{
+  questionText: string;
+  category: 'technical' | 'behavioral' | 'situational' | 'background';
+  difficulty: 'easy' | 'medium' | 'hard';
+  contextOrRationale: string;
+}> {
+  const norm = role.toLowerCase();
+  if (norm.includes('front')) {
+    return [
+      { questionText: 'Can you walk me through your approach to optimizing core web vitals and client-side rendering performance in a large single-page app?', category: 'technical', difficulty: 'medium', contextOrRationale: 'Frontend rendering performance' },
+      { questionText: 'How do you design scalable state management and component boundaries when collaborating with backend teams on asynchronous data fetching?', category: 'technical', difficulty: 'medium', contextOrRationale: 'Architectural component design' },
+      { questionText: 'Describe a situation where you had to push back on an unreasonable UX design or tight deadline to prevent technical debt. How did you handle it?', category: 'behavioral', difficulty: 'medium', contextOrRationale: 'Stakeholder communication' },
+      { questionText: 'How do you ensure accessibility (WCAG 2.1 AA) and cross-browser resilience across responsive layouts?', category: 'technical', difficulty: 'hard', contextOrRationale: 'Accessibility & standards compliance' },
+      { questionText: 'What is your strategy for writing maintainable test suites across unit, integration, and end-to-end user workflows?', category: 'situational', difficulty: 'hard', contextOrRationale: 'Testing strategy & code quality' },
+    ];
+  } else if (norm.includes('back') || norm.includes('system') || norm.includes('devops')) {
+    return [
+      { questionText: 'How do you design for fault tolerance and high availability in distributed services when dependent downstream APIs experience latency or failure?', category: 'technical', difficulty: 'medium', contextOrRationale: 'Distributed resilience' },
+      { questionText: 'Can you describe your strategy for database indexing, query optimization, and schema migrations under continuous production traffic?', category: 'technical', difficulty: 'medium', contextOrRationale: 'Data layer performance' },
+      { questionText: 'Tell me about a high-severity production outage you investigated. What was the root cause, and how did you prevent recurrence?', category: 'situational', difficulty: 'hard', contextOrRationale: 'Incident triage and post-mortems' },
+      { questionText: 'How do you balance asynchronous event-driven architectures with transactional consistency across service boundaries?', category: 'technical', difficulty: 'hard', contextOrRationale: 'Event consistency & messaging' },
+      { questionText: 'Describe how you maintain API backward compatibility and versioning across public and internal service consumers.', category: 'behavioral', difficulty: 'medium', contextOrRationale: 'API design governance' },
+    ];
+  } else if (norm.includes('data')) {
+    return [
+      { questionText: 'Walk me through how you build resilient ETL/ELT data pipelines capable of handling schema drift, backfills, and duplicate records.', category: 'technical', difficulty: 'medium', contextOrRationale: 'Data pipeline engineering' },
+      { questionText: 'How do you validate data quality and data integrity before feeding analytical warehouses or ML models?', category: 'technical', difficulty: 'medium', contextOrRationale: 'Data observability & validation' },
+      { questionText: 'Tell me about a time your analytical findings contradicted leadership or product assumptions. How did you communicate the results?', category: 'behavioral', difficulty: 'medium', contextOrRationale: 'Data storytelling & influence' },
+      { questionText: 'How do you optimize slow analytical queries on partitioned column-oriented databases under heavy concurrency?', category: 'technical', difficulty: 'hard', contextOrRationale: 'Query plan optimization' },
+      { questionText: 'Describe a machine learning or statistical model you deployed to production. How did you track concept drift and performance over time?', category: 'situational', difficulty: 'hard', contextOrRationale: 'Model lifecycle management' },
+    ];
+  } else {
+    return [
+      { questionText: 'Walk me through the most technically challenging project on your resume. What key architectural tradeoffs did you make?', category: 'background', difficulty: 'easy', contextOrRationale: 'Core technical experience' },
+      { questionText: 'How do you approach debugging complex, intermittent issues that only surface in production environments?', category: 'technical', difficulty: 'medium', contextOrRationale: 'Diagnostic and debugging methodology' },
+      { questionText: 'Tell me about a time you had a technical disagreement with a teammate or lead. How did you resolve it constructively?', category: 'behavioral', difficulty: 'medium', contextOrRationale: 'Collaboration and conflict resolution' },
+      { questionText: 'How do you prioritize non-functional requirements like security, maintainability, and scalability alongside fast feature delivery?', category: 'situational', difficulty: 'hard', contextOrRationale: 'Engineering judgment and prioritization' },
+      { questionText: 'If you joined our team today and were asked to lead the architecture for a new greenfield service, what would your first 30 days look like?', category: 'situational', difficulty: 'hard', contextOrRationale: 'Strategic architectural leadership' },
+    ];
+  }
+}
+
 export const groqService = {
   async transcribeAudio(audioBlob: Blob, apiKey?: string): Promise<string> {
     const effectiveApiKey = (apiKey || APP_CONFIG.groqApiKey || '').trim();
@@ -333,23 +375,26 @@ export const groqService = {
 
   async generateQuestions(params: GenerateQuestionsParams): Promise<InterviewQuestion[]> {
     const { config, resume } = params;
+    const targetCount = config.questionCount || 5;
     const systemPrompt = `You are an expert technical interviewer conducting a mock interview for a ${config.jobRole} position.
 
-Generate exactly ${config.questionCount} interview questions based on the candidate's resume and target role. The questions should:
-- Mix categories: technical, behavioral, situational, and background questions
-- Progress from easier to harder difficulty
-- Reference specifics from the resume (projects, technologies, experience)
-- Be clear and specific, not vague or generic
-${config.additionalInstructions ? `\nAdditional instructions from the candidate: ${config.additionalInstructions}` : ''}
+CRITICAL INSTRUCTION: You MUST generate an array containing EXACTLY ${targetCount} interview questions. Do not generate fewer than ${targetCount} questions.
+The candidate configured a full ${targetCount}-question mock interview round.
 
-Respond in JSON format:
+Requirements:
+- Balance categories: technical depth, problem-solving/architecture, behavioral, situational, and background
+- Progress smoothly from foundational to rigorous questions
+- Reference specific technologies, frameworks, and projects from the candidate's resume
+- Be crisp, conversational, and direct
+
+JSON format response:
 {
   "questions": [
     {
       "questionText": "...",
       "category": "technical|behavioral|situational|background",
       "difficulty": "easy|medium|hard",
-      "contextOrRationale": "Why this question is relevant"
+      "contextOrRationale": "Why this question tests the candidate's qualifications"
     }
   ]
 }`;
@@ -366,7 +411,21 @@ Respond in JSON format:
 
     const parsed = parseJsonResponse(raw, questionsArraySchema);
 
-    return parsed.questions.map((q, i) => ({
+    // Guarantee exact requested question count: pad if fewer, slice if more
+    while (parsed.questions.length < targetCount) {
+      const curates = getCuratedQuestionsForRole(config.jobRole);
+      const nextQ = curates[parsed.questions.length % curates.length];
+      parsed.questions.push({
+        questionText: nextQ.questionText,
+        category: nextQ.category,
+        difficulty: nextQ.difficulty,
+        contextOrRationale: nextQ.contextOrRationale,
+      });
+    }
+
+    const finalQuestions = parsed.questions.slice(0, targetCount);
+
+    return finalQuestions.map((q, i) => ({
       id: crypto.randomUUID(),
       index: i,
       questionText: q.questionText,
@@ -375,7 +434,7 @@ Respond in JSON format:
       contextOrRationale: q.contextOrRationale,
       isFollowUp: false,
       followUpDepth: 0,
-      status: i === 0 ? 'in_progress' as const : 'pending' as const,
+      status: i === 0 ? ('in_progress' as const) : ('pending' as const),
     }));
   },
 

@@ -31,11 +31,15 @@ export const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
           <div className="h-6 w-6 rounded bg-surface-muted flex items-center justify-center text-text-secondary">
             <Bot className="h-3.5 w-3.5" />
           </div>
-          <span className="text-xs font-medium text-text-secondary">
-            Interviewer
+          <span className="text-xs font-semibold text-text-primary">
+            AI Interviewer
+          </span>
+          <span className="text-[11px] text-text-muted">
+            (Natural Voice)
           </span>
           {isSpeaking && (
-            <span className="text-xs text-accent-text font-normal">
+            <span className="text-xs text-accent font-medium flex items-center gap-1">
+              <span className="h-1.5 w-1.5 rounded-full bg-accent animate-ping" />
               Speaking
             </span>
           )}

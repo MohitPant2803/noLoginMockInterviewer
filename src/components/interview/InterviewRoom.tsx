@@ -35,7 +35,6 @@ export const InterviewRoom: React.FC = () => {
   const voice = useVoiceRecognition();
   const speech = useSpeechSynthesis();
 
-  const [typedAnswer, setTypedAnswer] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showEndConfirm, setShowEndConfirm] = useState(false);
   const processingRef = useRef(false);
@@ -110,9 +109,9 @@ export const InterviewRoom: React.FC = () => {
   // ── Submit answer ──
   const handleSubmitAnswer = useCallback(async () => {
     if (!currentQuestion || hasAnswered || processingRef.current) return;
-    const answerText = (voice.transcript || typedAnswer).trim();
+    const answerText = voice.transcript.trim();
     if (!answerText) {
-      toast.warning('Please provide an answer before submitting.');
+      toast.warning('Please speak your answer before submitting.');
       return;
     }
 
@@ -156,14 +155,14 @@ export const InterviewRoom: React.FC = () => {
       });
     }
 
-    // 3. Check for follow-up
+    // 3. Check for adaptive follow-up (max 1 follow-up per main question)
     const sess = store.getState().session;
-    const isMainDone =
-      sess.mainQuestionsAsked >= sess.mainQuestionCount &&
+    const shouldFollowUp =
+      Boolean(evaluation?.shouldFollowUp) &&
+      sess.followUpsForCurrentMain < 1 &&
       !currentQuestion.isFollowUp;
-    const allMainsDone = sess.mainQuestionsAsked >= sess.mainQuestionCount;
 
-    if (evaluation?.shouldFollowUp && sess.followUpsForCurrentMain < 2 && !isMainDone) {
+    if (shouldFollowUp && evaluation) {
       store.getState().setStatus('generating_followup');
       try {
         const history = groqService.buildConversationHistory(
@@ -186,45 +185,39 @@ export const InterviewRoom: React.FC = () => {
           store.getState().incrementFollowUps();
           store.getState().setCurrentQuestionIndex(followUp.index);
           store.getState().setStatus('in_progress');
-          setTypedAnswer('');
           voice.resetTranscript();
           spokenQuestionRef.current = null;
           processingRef.current = false;
           setIsSubmitting(false);
           return;
         }
-      } catch {
-        // Follow-up generation failed — move to next main question
+      } catch (err) {
+        console.warn('Follow-up generation error:', err);
       }
     }
 
-    // 4. Advance to next main question or finish
-    if (currentQuestion.isFollowUp || !evaluation?.shouldFollowUp || sess.followUpsForCurrentMain >= 2) {
-      const currentMainIdx = currentQuestion.isFollowUp
-        ? session.questions.findIndex((q) => q.id === currentQuestion.followUpForId)
-        : session.questions.indexOf(currentQuestion);
-      const nextMainQ = session.questions.find(
-        (q, i) => i > currentMainIdx && !q.isFollowUp && q.status === 'pending'
-      );
+    // 4. Advance to the next pending main question (guaranteeing all configured main questions are asked)
+    const allQuestions = store.getState().session.questions;
+    const nextMainQ = allQuestions.find((q) => !q.isFollowUp && q.status === 'pending');
 
-      if (nextMainQ && !allMainsDone) {
-        store.getState().updateQuestion(nextMainQ.id, { status: 'in_progress' });
-        store.getState().setCurrentQuestionIndex(session.questions.indexOf(nextMainQ));
-        store.getState().resetFollowUps();
-        store.getState().incrementMainQuestionsAsked();
-        store.getState().setStatus('in_progress');
-        setTypedAnswer('');
-        voice.resetTranscript();
-        spokenQuestionRef.current = null;
-      } else {
-        await finishInterview();
-      }
+    if (nextMainQ) {
+      const nextIndex = allQuestions.indexOf(nextMainQ);
+      store.getState().updateQuestion(nextMainQ.id, { status: 'in_progress' });
+      store.getState().setCurrentQuestionIndex(nextIndex);
+      store.getState().resetFollowUps();
+      store.getState().incrementMainQuestionsAsked();
+      store.getState().setStatus('in_progress');
+      voice.resetTranscript();
+      spokenQuestionRef.current = null;
+    } else {
+      // All main questions completed! Conclude session.
+      await finishInterview();
     }
 
     processingRef.current = false;
     setIsSubmitting(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentQuestion, hasAnswered, voice.transcript, typedAnswer, config, resume]);
+  }, [currentQuestion, hasAnswered, voice.transcript, config, resume]);
 
   // ── Finish interview & generate report ──
   const finishInterview = useCallback(async () => {
@@ -416,13 +409,11 @@ export const InterviewRoom: React.FC = () => {
         </div>
       )}
 
-      {/* Candidate answer console */}
+      {/* Candidate answer console (100% voice-driven) */}
       {session.status !== 'paused' && (
         <AnswerInput
           transcript={voice.transcript}
           interimTranscript={voice.interimTranscript}
-          typedAnswer={typedAnswer}
-          onTypedAnswerChange={setTypedAnswer}
           isListening={voice.isListening}
           isTranscribing={voice.isTranscribing}
           transcriptionEngine={voice.engine}
@@ -431,6 +422,7 @@ export const InterviewRoom: React.FC = () => {
           sessionStatus={session.status}
           onStartRecording={handleStartRecording}
           onStopRecording={handleStopRecording}
+          onResetRecording={voice.resetTranscript}
           onSubmit={handleSubmitAnswer}
           isSubmitting={isSubmitting}
           hasAnswered={hasAnswered}

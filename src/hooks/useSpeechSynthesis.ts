@@ -1,9 +1,70 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 
+function pickBestFemaleVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice | null {
+  if (!voices || voices.length === 0) return null;
+
+  const english = voices.filter((v) => v.lang.startsWith('en'));
+
+  // Priority 1: Natural / Online Neural Female Voices (Edge & Chrome Natural voices)
+  const naturalFemale = english.find((v) => {
+    const n = v.name.toLowerCase();
+    const isNatural = n.includes('natural') || n.includes('neural') || n.includes('online');
+    const isFemale =
+      n.includes('jenny') ||
+      n.includes('aria') ||
+      n.includes('female') ||
+      n.includes('sara') ||
+      n.includes('michelle') ||
+      n.includes('ava') ||
+      n.includes('emma');
+    return isNatural && isFemale;
+  });
+  if (naturalFemale) return naturalFemale;
+
+  // Priority 2: Named Female voices (Jenny, Aria, Zira, Samantha, Victoria, Karen)
+  const namedFemale = english.find((v) => {
+    const n = v.name.toLowerCase();
+    return (
+      n.includes('jenny') ||
+      n.includes('aria') ||
+      n.includes('zira') ||
+      n.includes('samantha') ||
+      n.includes('victoria') ||
+      n.includes('karen') ||
+      n.includes('female') ||
+      n.includes('allison')
+    );
+  });
+  if (namedFemale) return namedFemale;
+
+  // Priority 3: Google US or UK Female
+  const googleFemale = english.find((v) => {
+    const n = v.name.toLowerCase();
+    return n.includes('google') && (n.includes('female') || n.includes('en-us') || n.includes('en-gb'));
+  });
+  if (googleFemale) return googleFemale;
+
+  // Priority 4: Non-male English voice
+  const nonMale = english.find((v) => {
+    const n = v.name.toLowerCase();
+    return (
+      !n.includes('david') &&
+      !n.includes('mark') &&
+      !n.includes('guy') &&
+      !n.includes('george') &&
+      !n.includes('male')
+    );
+  });
+  if (nonMale) return nonMale;
+
+  return english[0] || voices[0] || null;
+}
+
 export interface UseSpeechSynthesisReturn {
   isSupported: boolean;
   isSpeaking: boolean;
   isMuted: boolean;
+  activeVoiceName: string;
   speak: (text: string) => void;
   stop: () => void;
   toggleMute: () => void;
@@ -16,11 +77,28 @@ export function useSpeechSynthesis(): UseSpeechSynthesisReturn {
 
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isMuted, setIsMutedState] = useState(false);
+  const [activeVoiceName, setActiveVoiceName] = useState('');
   const isMutedRef = useRef(false);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const cachedVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
 
   useEffect(() => {
+    if (!isSupported) return;
+
+    const refreshVoice = () => {
+      const voices = window.speechSynthesis.getVoices();
+      const best = pickBestFemaleVoice(voices);
+      if (best) {
+        cachedVoiceRef.current = best;
+        setActiveVoiceName(best.name);
+      }
+    };
+
+    refreshVoice();
+    window.speechSynthesis.onvoiceschanged = refreshVoice;
+
     return () => {
+      window.speechSynthesis.onvoiceschanged = null;
       if (isSupported) {
         window.speechSynthesis.cancel();
       }
@@ -42,17 +120,15 @@ export function useSpeechSynthesis(): UseSpeechSynthesisReturn {
       window.speechSynthesis.cancel();
 
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 0.95;
-      utterance.pitch = 1;
+      utterance.rate = 0.96; // warm, conversational pacing
+      utterance.pitch = 1.05; // natural feminine tone
       utterance.volume = 1;
 
-      // Try to pick a good English voice
-      const voices = window.speechSynthesis.getVoices();
-      const preferred = voices.find(
-        (v) => v.lang.startsWith('en') && v.name.toLowerCase().includes('google')
-      ) || voices.find((v) => v.lang.startsWith('en-US'))
-        || voices.find((v) => v.lang.startsWith('en'));
-      if (preferred) utterance.voice = preferred;
+      // Assign natural female voice
+      const voice = cachedVoiceRef.current || pickBestFemaleVoice(window.speechSynthesis.getVoices());
+      if (voice) {
+        utterance.voice = voice;
+      }
 
       utterance.onstart = () => setIsSpeaking(true);
       utterance.onend = () => {
@@ -61,7 +137,7 @@ export function useSpeechSynthesis(): UseSpeechSynthesisReturn {
       };
       utterance.onerror = (e) => {
         if (e.error !== 'canceled' && e.error !== 'interrupted') {
-          // Silently handle — speech synthesis errors are non-critical
+          console.warn('Speech synthesis warning:', e.error);
         }
         setIsSpeaking(false);
         utteranceRef.current = null;
@@ -91,5 +167,14 @@ export function useSpeechSynthesis(): UseSpeechSynthesisReturn {
     }
   }, [isSupported]);
 
-  return { isSupported, isSpeaking, isMuted, speak, stop, toggleMute, setMuted };
+  return {
+    isSupported,
+    isSpeaking,
+    isMuted,
+    activeVoiceName,
+    speak,
+    stop,
+    toggleMute,
+    setMuted,
+  };
 }
