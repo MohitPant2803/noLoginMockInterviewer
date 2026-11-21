@@ -9,6 +9,8 @@ interface AnswerInputProps {
   typedAnswer: string;
   onTypedAnswerChange: (val: string) => void;
   isListening: boolean;
+  isTranscribing?: boolean;
+  transcriptionEngine?: 'browser' | 'whisper';
   voiceSupported: boolean;
   voiceError: string | null;
   sessionStatus: SessionStatus;
@@ -25,6 +27,8 @@ export const AnswerInput: React.FC<AnswerInputProps> = ({
   typedAnswer,
   onTypedAnswerChange,
   isListening,
+  isTranscribing = false,
+  transcriptionEngine = 'browser',
   voiceSupported,
   voiceError,
   sessionStatus,
@@ -41,9 +45,10 @@ export const AnswerInput: React.FC<AnswerInputProps> = ({
     (displayText.trim().length > 0 || interimTranscript.length > 0) &&
     !isSubmitting &&
     !hasAnswered &&
+    !isTranscribing &&
     sessionStatus === 'in_progress';
   const isProcessing = sessionStatus === 'evaluating' || sessionStatus === 'generating_followup';
-  const isDisabled = hasAnswered || isProcessing || sessionStatus !== 'in_progress';
+  const isDisabled = hasAnswered || isProcessing || isTranscribing || sessionStatus !== 'in_progress';
 
   // Space-key shortcut (not in textareas or inputs)
   useEffect(() => {
@@ -76,8 +81,17 @@ export const AnswerInput: React.FC<AnswerInputProps> = ({
           <span>Candidate response</span>
         </div>
         {isListening && (
-          <span className="text-xs text-status-danger font-medium">
-            Recording
+          <span className="flex items-center gap-1.5 text-xs text-status-danger font-medium">
+            <span className="h-2 w-2 rounded-full bg-status-danger animate-pulse" />
+            {transcriptionEngine === 'whisper'
+              ? 'Recording (Groq Whisper AI)...'
+              : 'Listening... speak now'}
+          </span>
+        )}
+        {isTranscribing && (
+          <span className="flex items-center gap-1.5 text-xs text-text-primary font-medium bg-surface-elevated px-2 py-0.5 rounded border border-border-subtle">
+            <Loader2 className="h-3 w-3 animate-spin text-accent" />
+            Transcribing speech with Whisper AI...
           </span>
         )}
         {isProcessing && (
@@ -97,27 +111,33 @@ export const AnswerInput: React.FC<AnswerInputProps> = ({
           ref={textareaRef}
           value={isListening ? fullDisplay : (transcript || typedAnswer)}
           onChange={(e) => {
-            if (!isListening && !hasAnswered) {
+            if (!isListening && !hasAnswered && !isTranscribing) {
               onTypedAnswerChange(e.target.value);
             }
           }}
-          readOnly={isListening || hasAnswered || isProcessing}
+          readOnly={isListening || hasAnswered || isProcessing || isTranscribing}
           rows={5}
           placeholder={
             isListening
-              ? 'Listening... speak now'
-              : hasAnswered
-                ? 'Answer submitted'
-                : voiceSupported
-                  ? 'Press Space or the record button to speak, or type your answer here...'
-                  : 'Type your answer here...'
+              ? transcriptionEngine === 'whisper'
+                ? 'Recording your voice... text will appear when you stop recording'
+                : 'Listening... speak now'
+              : isTranscribing
+                ? 'Transcribing your audio with Groq Whisper AI...'
+                : hasAnswered
+                  ? 'Answer submitted'
+                  : voiceSupported
+                    ? 'Press Space or the record button to speak, or type your answer here...'
+                    : 'Type your answer here...'
           }
           className={`w-full rounded border bg-canvas p-3.5 text-sm leading-relaxed transition-colors resize-none focus:outline-none ${
             isListening
               ? 'border-status-danger focus:border-status-danger text-text-primary'
-              : hasAnswered
-                ? 'border-status-success-border text-text-secondary cursor-default'
-                : 'border-border-subtle focus:border-border-focus text-text-primary'
+              : isTranscribing
+                ? 'border-accent bg-surface-elevated text-text-muted cursor-wait'
+                : hasAnswered
+                  ? 'border-status-success-border text-text-secondary cursor-default'
+                  : 'border-border-subtle focus:border-border-focus text-text-primary'
           } placeholder:text-text-muted`}
         />
         {isListening && interimTranscript && (
@@ -139,7 +159,17 @@ export const AnswerInput: React.FC<AnswerInputProps> = ({
       <div className="flex flex-col sm:flex-row items-center gap-3 pt-1">
         {voiceSupported && (
           <div className="flex items-center gap-2 w-full sm:w-auto">
-            {!isListening ? (
+            {isTranscribing ? (
+              <Button
+                variant="outline"
+                size="md"
+                disabled
+                leftIcon={<Loader2 className="h-4 w-4 animate-spin" />}
+                className="flex-1 sm:flex-initial"
+              >
+                Transcribing...
+              </Button>
+            ) : !isListening ? (
               <Button
                 variant="outline"
                 size="md"

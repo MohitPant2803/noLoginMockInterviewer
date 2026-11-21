@@ -268,6 +268,53 @@ export interface GenerateReportParams {
 }
 
 export const groqService = {
+  async transcribeAudio(audioBlob: Blob, apiKey?: string): Promise<string> {
+    const effectiveApiKey = (apiKey || APP_CONFIG.groqApiKey || '').trim();
+    if (!effectiveApiKey) {
+      throw new Error('Groq API key is required for audio transcription.');
+    }
+
+    const formData = new FormData();
+    const extension = audioBlob.type.includes('mp4') ? 'mp4' : audioBlob.type.includes('ogg') ? 'ogg' : 'webm';
+    formData.append('file', audioBlob, `recording.${extension}`);
+    formData.append('model', 'whisper-large-v3-turbo');
+    formData.append('language', 'en');
+    formData.append('response_format', 'json');
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 25000);
+
+    try {
+      const response = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${effectiveApiKey}`,
+        },
+        body: formData,
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        let errMessage = `Transcription failed (${response.status})`;
+        try {
+          const errData = await response.json();
+          if (errData?.error?.message) errMessage = errData.error.message;
+        } catch { /* ignore */ }
+        throw new Error(errMessage);
+      }
+
+      const data = await response.json();
+      return (data.text || '').trim();
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        throw new Error('Audio transcription timed out.');
+      }
+      throw err;
+    } finally {
+      clearTimeout(timeout);
+    }
+  },
+
   async validateApiKey(apiKey: string): Promise<{ valid: boolean; error?: string }> {
     if (!apiKey || !apiKey.trim().startsWith('gsk_')) {
       return { valid: false, error: 'API key must start with "gsk_".' };

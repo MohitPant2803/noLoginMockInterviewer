@@ -424,6 +424,8 @@ export const InterviewRoom: React.FC = () => {
           typedAnswer={typedAnswer}
           onTypedAnswerChange={setTypedAnswer}
           isListening={voice.isListening}
+          isTranscribing={voice.isTranscribing}
+          transcriptionEngine={voice.engine}
           voiceSupported={voice.isSupported}
           voiceError={voice.error}
           sessionStatus={session.status}
