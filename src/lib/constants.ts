@@ -1,6 +1,6 @@
 export const APP_CONFIG = {
   appName: import.meta.env.VITE_APP_NAME || 'AI Mock Interviewer',
-  defaultGroqModel: import.meta.env.VITE_GROQ_DEFAULT_MODEL || 'llama-3.3-70b-versatile',
+  defaultGroqModel: import.meta.env.VITE_GROQ_DEFAULT_MODEL || 'openai/gpt-oss-120b',
   defaultQuestionCount: 5,
   supportedQuestionCounts: [5, 10, 15, 20] as const,
   supportedFileTypes: ['.pdf', '.docx'] as const,
@@ -10,6 +10,14 @@ export const APP_CONFIG = {
   ] as const,
   maxFileSizeBytes: 5 * 1024 * 1024, // 5 MB
 };
+
+export const AVAILABLE_GROQ_MODELS = [
+  { id: 'openai/gpt-oss-120b', label: 'GPT-OSS 120B (High Reasoning • Recommended)' },
+  { id: 'openai/gpt-oss-20b', label: 'GPT-OSS 20B (Ultra-fast inference)' },
+  { id: 'qwen/qwen3.8-27b', label: 'Qwen 3.8 27B' },
+  { id: 'llama-3.3-70b-versatile', label: 'Llama 3.3 70B' },
+  { id: 'llama-3.1-8b-instant', label: 'Llama 3.1 8B Instant' },
+] as const;
 
 export const STANDARD_ROLES = [
   'Software Engineer',

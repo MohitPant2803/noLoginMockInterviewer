@@ -18,6 +18,7 @@ import {
 import { useConfigStore, useResumeStore, useInterviewStore } from '@/store';
 import {
   APP_CONFIG,
+  AVAILABLE_GROQ_MODELS,
   STANDARD_ROLES,
   QUESTION_COUNT_OPTIONS,
   INSTRUCTION_PRESETS,
@@ -49,6 +50,7 @@ const formSchema = z
       .refine((val) => val.length >= 20, {
         message: 'Please enter a valid, complete Groq API key',
       }),
+    groqModel: z.string().optional(),
   })
   .superRefine((data, ctx) => {
     if (data.roleSelection === 'Custom') {
@@ -109,6 +111,7 @@ export const SetupForm: React.FC = () => {
       questionCount: currentConfig?.questionCount || 5,
       additionalInstructions: currentConfig?.additionalInstructions || '',
       groqApiKey: currentConfig?.groqApiKey || '',
+      groqModel: currentConfig?.groqModel || APP_CONFIG.defaultGroqModel,
     },
   });
 
@@ -155,7 +158,7 @@ export const SetupForm: React.FC = () => {
       questionCount: data.questionCount,
       additionalInstructions: data.additionalInstructions?.trim() || '',
       groqApiKey: data.groqApiKey.trim(),
-      groqModel: APP_CONFIG.defaultGroqModel,
+      groqModel: data.groqModel || APP_CONFIG.defaultGroqModel,
     });
 
     // 5. Initialize fresh interview session
@@ -353,8 +356,8 @@ export const SetupForm: React.FC = () => {
             </div>
           </div>
 
-          {/* SECTION 5: GROQ API KEY */}
-          <div className="space-y-3">
+          {/* SECTION 5: GROQ API KEY & MODEL */}
+          <div className="space-y-4">
             <Controller
               name="groqApiKey"
               control={control}
@@ -366,6 +369,31 @@ export const SetupForm: React.FC = () => {
                 />
               )}
             />
+
+            <div className="space-y-1.5 pt-1">
+              <label htmlFor="groqModel" className="block text-xs font-semibold text-slate-300">
+                Inference Model
+              </label>
+              <div className="relative">
+                <select
+                  id="groqModel"
+                  {...register('groqModel')}
+                  className="w-full appearance-none rounded-lg border border-slate-800 bg-slate-900/90 px-3.5 py-2.5 text-xs text-slate-200 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
+                >
+                  {AVAILABLE_GROQ_MODELS.map((m) => (
+                    <option key={m.id} value={m.id} className="bg-slate-900 text-slate-100">
+                      {m.label} ({m.id})
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 text-xs">
+                  ▼
+                </div>
+              </div>
+              <p className="text-[11px] text-slate-500">
+                Automatic fallback: If a model is deprecated or unreachable on your account tier, the system automatically routes to an available Groq model.
+              </p>
+            </div>
           </div>
 
           {/* SUBMIT BUTTON */}

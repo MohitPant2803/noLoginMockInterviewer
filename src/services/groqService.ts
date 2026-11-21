@@ -157,26 +157,53 @@ function parseJsonResponse<T>(raw: string, schema: z.ZodType<T>): T {
   return schema.parse(parsed);
 }
 
+const FALLBACK_MODELS = [
+  'openai/gpt-oss-120b',
+  'openai/gpt-oss-20b',
+  'qwen/qwen3.8-27b',
+  'llama-3.3-70b-versatile',
+  'llama-3.1-8b-instant',
+];
+
 async function groqRequestWithRetry(
   opts: GroqRequestOptions,
   retries = MAX_RETRIES
 ): Promise<string> {
+  const candidateModels = [
+    opts.model,
+    ...FALLBACK_MODELS.filter((m) => m !== opts.model),
+  ];
+
   let lastError: Error | null = null;
-  for (let attempt = 0; attempt <= retries; attempt++) {
-    try {
-      return await groqRequest(opts);
-    } catch (err) {
-      lastError = err instanceof Error ? err : new Error(String(err));
-      if (err instanceof GroqApiError) {
-        if (err.isAuthError) throw err; // Don't retry auth errors
-        if (err.isRateLimit && attempt < retries) {
-          await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)));
+
+  for (const model of candidateModels) {
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        return await groqRequest({ ...opts, model });
+      } catch (err) {
+        lastError = err instanceof Error ? err : new Error(String(err));
+        if (err instanceof GroqApiError) {
+          if (err.isAuthError) throw err; // Don't retry auth errors
+
+          const isModelError =
+            err.statusCode === 404 ||
+            err.message.toLowerCase().includes('model') ||
+            err.message.toLowerCase().includes('access');
+
+          if (isModelError) {
+            // Model not found or not accessible on this key; break to try fallback model
+            break;
+          }
+
+          if (err.isRateLimit && attempt < retries) {
+            await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)));
+            continue;
+          }
+        }
+        if (attempt < retries) {
+          await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
           continue;
         }
-      }
-      if (attempt < retries) {
-        await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
-        continue;
       }
     }
   }
