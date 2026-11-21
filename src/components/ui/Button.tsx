@@ -26,20 +26,25 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const baseStyles =
-      'inline-flex items-center justify-center font-medium rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 disabled:opacity-50 disabled:pointer-events-none select-none';
+      'inline-flex items-center justify-center font-medium rounded transition-colors focus-visible:outline-none disabled:opacity-40 disabled:pointer-events-none select-none cursor-pointer';
 
     const variants = {
-      primary: 'bg-indigo-600 text-white hover:bg-indigo-500 active:bg-indigo-700 shadow-sm',
-      secondary: 'bg-slate-800 text-slate-100 hover:bg-slate-700 active:bg-slate-800 border border-slate-700',
-      outline: 'border border-slate-700 bg-transparent text-slate-200 hover:bg-slate-800 hover:text-white',
-      ghost: 'bg-transparent text-slate-300 hover:bg-slate-800 hover:text-white',
-      danger: 'bg-red-600 text-white hover:bg-red-500 active:bg-red-700',
+      primary:
+        'bg-accent text-white hover:bg-accent-hover active:brightness-95',
+      secondary:
+        'bg-surface-elevated text-text-primary border border-border-subtle hover:bg-surface-hover hover:border-border-strong',
+      outline:
+        'border border-border-strong bg-transparent text-text-secondary hover:bg-surface-muted hover:text-text-primary',
+      ghost:
+        'bg-transparent text-text-secondary hover:bg-surface-muted hover:text-text-primary',
+      danger:
+        'bg-status-danger text-white hover:brightness-110 active:brightness-90',
     };
 
     const sizes = {
-      sm: 'text-xs px-3 py-1.5 gap-1.5',
-      md: 'text-sm px-4 py-2 gap-2',
-      lg: 'text-base px-6 py-2.5 gap-2.5',
+      sm: 'text-xs px-2.5 py-1.5 gap-1.5',
+      md: 'text-sm px-3.5 py-2 gap-2',
+      lg: 'text-sm font-semibold px-5 py-2.5 gap-2.5',
     };
 
     return (
@@ -50,7 +55,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {...props}
       >
         {isLoading ? (
-          <Loader2 className="h-4 w-4 animate-spin text-current" />
+          <Loader2 className="h-3.5 w-3.5 animate-spin text-current" />
         ) : (
           leftIcon
         )}

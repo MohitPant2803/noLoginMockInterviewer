@@ -15,7 +15,7 @@ import {
 import { useConfigStore, useResumeStore, useInterviewStore, useReportStore } from '@/store';
 import { useVoiceRecognition, useSpeechSynthesis } from '@/hooks';
 import { groqService, GroqApiError } from '@/services/groqService';
-import { Button, Card, CardContent, Badge } from '@/components/ui';
+import { Button, Badge } from '@/components/ui';
 import { InterviewProgress } from './InterviewProgress';
 import { QuestionDisplay } from './QuestionDisplay';
 import { AnswerInput } from './AnswerInput';
@@ -63,7 +63,7 @@ export const InterviewRoom: React.FC = () => {
         const msg =
           err instanceof GroqApiError
             ? err.isAuthError
-              ? 'Invalid Groq API key. Please go back to setup and correct it.'
+              ? 'Invalid Groq API key. Please check your credentials in setup.'
               : err.message
             : 'Failed to generate questions. Please try again.';
         store.getState().setError(msg);
@@ -80,7 +80,6 @@ export const InterviewRoom: React.FC = () => {
     if (!currentQuestion) return;
     if (currentQuestion.questionText === spokenQuestionRef.current) return;
     spokenQuestionRef.current = currentQuestion.questionText;
-    // Small delay to let UI render
     const t = setTimeout(() => {
       speech.speak(currentQuestion.questionText);
     }, 400);
@@ -98,7 +97,7 @@ export const InterviewRoom: React.FC = () => {
   // ── Mic handlers ──
   const handleStartRecording = useCallback(() => {
     if (hasAnswered) return;
-    speech.stop(); // Stop TTS when mic starts
+    speech.stop();
     voice.startListening();
     store.getState().setIsListening(true);
   }, [hasAnswered, speech, voice]);
@@ -123,7 +122,7 @@ export const InterviewRoom: React.FC = () => {
     speech.stop();
     store.getState().setIsListening(false);
 
-    // 1. Save answer immediately (never lose it)
+    // 1. Save answer immediately
     const answer: CandidateAnswer = {
       questionId: currentQuestion.id,
       transcript: answerText,
@@ -153,7 +152,7 @@ export const InterviewRoom: React.FC = () => {
       const errMsg = err instanceof Error ? err.message : 'Evaluation failed';
       store.getState().updateAnswer(currentQuestion.id, { evaluationError: errMsg });
       toast.error('Could not evaluate answer', {
-        description: 'Your answer was saved. Evaluation can be retried in the report.',
+        description: 'Your response was preserved in memory.',
       });
     }
 
@@ -195,13 +194,12 @@ export const InterviewRoom: React.FC = () => {
           return;
         }
       } catch {
-        // Follow-up generation failed — just move on
+        // Follow-up generation failed — move to next main question
       }
     }
 
     // 4. Advance to next main question or finish
     if (currentQuestion.isFollowUp || !evaluation?.shouldFollowUp || sess.followUpsForCurrentMain >= 2) {
-      // Find next main question
       const currentMainIdx = currentQuestion.isFollowUp
         ? session.questions.findIndex((q) => q.id === currentQuestion.followUpForId)
         : session.questions.indexOf(currentQuestion);
@@ -219,7 +217,6 @@ export const InterviewRoom: React.FC = () => {
         voice.resetTranscript();
         spokenQuestionRef.current = null;
       } else {
-        // All done
         await finishInterview();
       }
     }
@@ -249,13 +246,13 @@ export const InterviewRoom: React.FC = () => {
       });
       report.interviewId = sess.id;
       setReport(report);
-      toast.success('Interview complete! Generating your report...');
+      toast.success('Interview complete');
       navigate('/report');
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to generate report';
       setReportError(msg);
       toast.error('Report generation failed', {
-        description: 'Navigate to the report page to retry.',
+        description: 'You can retry from the evaluation page.',
       });
       navigate('/report');
     }
@@ -282,19 +279,16 @@ export const InterviewRoom: React.FC = () => {
   // ── Generating Questions State ──
   if (session.status === 'generating_questions') {
     return (
-      <div className="max-w-2xl mx-auto text-center py-20 space-y-6">
-        <div className="mx-auto h-16 w-16 rounded-2xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center">
-          <Loader2 className="h-8 w-8 text-indigo-400 animate-spin" />
+      <div className="max-w-md mx-auto text-center py-20 space-y-4">
+        <div className="mx-auto h-10 w-10 rounded bg-surface-muted flex items-center justify-center">
+          <Loader2 className="h-5 w-5 text-accent animate-spin" />
         </div>
-        <div>
-          <h2 className="text-xl font-bold text-slate-100">Preparing Your Interview</h2>
-          <p className="mt-2 text-sm text-slate-400">
-            Generating {config.questionCount} personalized questions for{' '}
-            <span className="text-indigo-400 font-medium">{config.jobRole}</span> based on your
-            resume...
+        <div className="space-y-1">
+          <h2 className="text-base font-semibold text-text-primary">Preparing interview session</h2>
+          <p className="text-xs text-text-muted">
+            Formulating {config.questionCount} questions for {config.jobRole}...
           </p>
         </div>
-        <p className="text-xs text-slate-500">This usually takes 5–15 seconds.</p>
       </div>
     );
   }
@@ -302,21 +296,22 @@ export const InterviewRoom: React.FC = () => {
   // ── Error State ──
   if (session.status === 'idle' && session.currentError) {
     return (
-      <div className="max-w-lg mx-auto text-center py-16 space-y-6">
-        <div className="mx-auto h-14 w-14 rounded-2xl bg-red-950/60 border border-red-800/50 flex items-center justify-center">
-          <WifiOff className="h-7 w-7 text-red-400" />
+      <div className="max-w-md mx-auto text-center py-16 space-y-4">
+        <div className="mx-auto h-10 w-10 rounded bg-status-danger-bg border border-status-danger-border flex items-center justify-center">
+          <WifiOff className="h-5 w-5 text-status-danger" />
         </div>
-        <div>
-          <h2 className="text-xl font-bold text-slate-100">Could Not Start Interview</h2>
-          <p className="mt-2 text-sm text-red-300/90">{session.currentError}</p>
+        <div className="space-y-1">
+          <h2 className="text-base font-semibold text-text-primary">Unable to initialize interview</h2>
+          <p className="text-xs text-status-danger">{session.currentError}</p>
         </div>
-        <div className="flex justify-center gap-3">
+        <div className="flex justify-center gap-3 pt-2">
           <Link to="/setup">
-            <Button variant="outline" leftIcon={<Settings className="h-4 w-4" />}>
-              Edit Setup
+            <Button variant="outline" size="sm" leftIcon={<Settings className="h-3.5 w-3.5" />}>
+              Edit setup
             </Button>
           </Link>
           <Button
+            size="sm"
             onClick={() => {
               store.getState().setError(null);
               store.getState().setStatus('idle');
@@ -331,23 +326,23 @@ export const InterviewRoom: React.FC = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto w-full space-y-5">
-      {/* Top bar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-xl border border-slate-800 bg-slate-900/60">
+    <div className="max-w-container mx-auto w-full space-y-5 px-4 sm:px-6 py-6">
+      {/* Top action plane */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded border border-border-subtle bg-surface">
         <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-lg bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
-            <Bot className="h-5 w-5" />
+          <div className="h-8 w-8 rounded bg-surface-muted flex items-center justify-center text-text-secondary">
+            <Bot className="h-4 w-4" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-sm font-semibold text-slate-100">{config.jobRole}</h2>
-              <Badge variant={session.status === 'paused' ? 'warning' : 'success'} className="text-[10px]">
-                {session.status === 'paused' ? 'Paused' : 'Live'}
+              <h2 className="text-xs font-semibold text-text-primary">{config.jobRole}</h2>
+              <Badge variant={session.status === 'paused' ? 'warning' : 'success'}>
+                {session.status === 'paused' ? 'Paused' : 'Active'}
               </Badge>
             </div>
-            <p className="text-[11px] text-slate-400 mt-0.5">
-              Model: {config.groqModel}
-            </p>
+            <div className="text-[11px] text-text-muted mt-0.5">
+              <span>Model: {config.groqModel}</span>
+            </div>
           </div>
         </div>
 
@@ -383,15 +378,15 @@ export const InterviewRoom: React.FC = () => {
             disabled={isSubmitting}
             leftIcon={<StopCircle className="h-3.5 w-3.5" />}
           >
-            End Interview
+            End interview
           </Button>
         </div>
       </div>
 
-      {/* Progress */}
+      {/* Progress track */}
       <InterviewProgress session={session} />
 
-      {/* Question */}
+      {/* Question prompt */}
       <QuestionDisplay
         question={currentQuestion}
         status={session.status}
@@ -401,26 +396,27 @@ export const InterviewRoom: React.FC = () => {
         onReplay={() => currentQuestion && speech.speak(currentQuestion.questionText)}
       />
 
-      {/* Paused overlay */}
+      {/* Paused state */}
       {session.status === 'paused' && (
-        <Card className="border-amber-900/50 bg-amber-950/20 text-center">
-          <CardContent className="p-6 space-y-3">
-            <PauseCircle className="h-8 w-8 text-amber-400 mx-auto" />
-            <h3 className="text-base font-semibold text-amber-200">Interview Paused</h3>
-            <p className="text-sm text-amber-300/70">
-              Take your time. Click Resume to continue from where you left off.
-            </p>
+        <div className="rounded border border-status-warning-border bg-status-warning-bg p-6 text-center space-y-2">
+          <PauseCircle className="h-6 w-6 text-status-warning mx-auto" />
+          <h3 className="text-sm font-semibold text-status-warning">Interview paused</h3>
+          <p className="text-xs text-text-muted">
+            The session is held in memory. Resume whenever you are ready.
+          </p>
+          <div className="pt-2">
             <Button
+              size="sm"
               onClick={() => store.getState().setStatus('in_progress')}
-              leftIcon={<PlayCircle className="h-4 w-4" />}
+              leftIcon={<PlayCircle className="h-3.5 w-3.5" />}
             >
-              Resume Interview
+              Resume interview
             </Button>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
-      {/* Answer input */}
+      {/* Candidate answer console */}
       {session.status !== 'paused' && (
         <AnswerInput
           transcript={voice.transcript}
@@ -439,43 +435,33 @@ export const InterviewRoom: React.FC = () => {
         />
       )}
 
-      {/* API Error */}
+      {/* Error alert */}
       {session.currentError && session.status !== 'idle' && (
-        <div className="p-3.5 rounded-xl border border-red-900/50 bg-red-950/20 text-xs text-red-300 flex items-start gap-2.5">
-          <AlertCircle className="h-4 w-4 text-red-400 shrink-0 mt-0.5" />
-          <div>
-            <p className="font-semibold text-red-200">Error</p>
-            <p className="mt-0.5">{session.currentError}</p>
-          </div>
+        <div className="p-3 rounded border border-status-danger-border bg-status-danger-bg text-xs text-status-danger flex items-start gap-2">
+          <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+          <span>{session.currentError}</span>
         </div>
       )}
 
-      {/* Session Loss Warning */}
-      <div className="text-center text-[11px] text-slate-600 py-2">
-        ⚠ Interview data is held in memory only. Refreshing or closing this tab will lose your session.
-      </div>
-
-      {/* End Interview Confirmation Modal */}
+      {/* Early Termination Confirmation Modal */}
       {showEndConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <Card className="max-w-md w-full border-slate-700 bg-slate-900 shadow-2xl">
-            <CardContent className="p-6 space-y-4 text-center">
-              <StopCircle className="h-10 w-10 text-red-400 mx-auto" />
-              <h3 className="text-lg font-bold text-slate-100">End Interview Early?</h3>
-              <p className="text-sm text-slate-400 leading-relaxed">
-                You have answered {session.answers.length} of {session.mainQuestionCount} main
-                questions. A report will be generated from the answers provided so far.
-              </p>
-              <div className="flex items-center justify-center gap-3 pt-2">
-                <Button variant="outline" onClick={() => setShowEndConfirm(false)}>
-                  Continue Interview
-                </Button>
-                <Button variant="danger" onClick={confirmEndInterview} isLoading={isSubmitting}>
-                  End & Generate Report
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+          <div className="max-w-sm w-full rounded border border-border-strong bg-surface p-5 space-y-3 text-center">
+            <StopCircle className="h-7 w-7 text-status-danger mx-auto" />
+            <h3 className="text-sm font-semibold text-text-primary">Conclude interview early?</h3>
+            <p className="text-xs text-text-muted leading-relaxed">
+              You have completed {session.answers.length} of {session.mainQuestionCount} questions.
+              An evaluation scorecard will be synthesized from the available answers.
+            </p>
+            <div className="flex items-center justify-center gap-2.5 pt-2">
+              <Button variant="outline" size="sm" onClick={() => setShowEndConfirm(false)}>
+                Continue
+              </Button>
+              <Button variant="danger" size="sm" onClick={confirmEndInterview} isLoading={isSubmitting}>
+                Generate report
+              </Button>
+            </div>
+          </div>
         </div>
       )}
     </div>

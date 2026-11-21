@@ -1,5 +1,4 @@
 import React from 'react';
-import { cn } from '@/lib/utils';
 import type { InterviewSession } from '@/types';
 
 interface InterviewProgressProps {
@@ -16,19 +15,16 @@ export const InterviewProgress: React.FC<InterviewProgressProps> = ({ session })
 
   return (
     <div className="w-full space-y-1.5">
-      <div className="flex items-center justify-between text-xs text-slate-400">
+      <div className="flex items-center justify-between text-xs text-text-muted">
         <span>
           Main question {Math.min(mainQuestionsAsked, mainQuestionCount)} of {mainQuestionCount}
         </span>
         <span>{pct}% complete</span>
       </div>
-      <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+      <div className="w-full h-1.5 bg-surface-muted rounded overflow-hidden">
         <div
-          className={cn(
-            'h-full rounded-full transition-all duration-500',
-            pct >= 100 ? 'bg-emerald-500' : 'bg-indigo-500'
-          )}
-          style={{ width: `${Math.min(pct, 100)}%` }}
+          className="h-full rounded bg-accent transition-transform duration-300 origin-left"
+          style={{ transform: `scaleX(${Math.min(pct, 100) / 100})` }}
         />
       </div>
     </div>

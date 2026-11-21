@@ -14,27 +14,27 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
     return (
       <div className="w-full space-y-1.5">
         {label && (
-          <label htmlFor={textareaId} className="block text-sm font-medium text-slate-200">
+          <label htmlFor={textareaId} className="block text-xs font-medium text-text-secondary">
             {label}
-            {props.required && <span className="text-red-400 ml-1">*</span>}
+            {props.required && <span className="text-status-danger ml-1">*</span>}
           </label>
         )}
         <textarea
           id={textareaId}
           ref={ref}
           className={cn(
-            'w-full rounded-lg border bg-slate-900/80 px-3.5 py-2.5 text-sm text-slate-100 placeholder:text-slate-500 transition-colors',
-            'border-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500',
-            'disabled:cursor-not-allowed disabled:opacity-50 min-h-[90px]',
-            error && 'border-red-500 focus:border-red-500 focus:ring-red-500',
+            'w-full rounded border bg-surface px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted transition-colors leading-relaxed',
+            'border-border-subtle focus:border-border-focus focus:outline-none',
+            'disabled:cursor-not-allowed disabled:opacity-40 min-h-[90px]',
+            error && 'border-status-danger focus:border-status-danger',
             className
           )}
           {...props}
         />
         {error ? (
-          <p className="text-xs text-red-400">{error}</p>
+          <p className="text-xs text-status-danger">{error}</p>
         ) : helperText ? (
-          <p className="text-xs text-slate-400">{helperText}</p>
+          <p className="text-xs text-text-muted">{helperText}</p>
         ) : null}
       </div>
     );

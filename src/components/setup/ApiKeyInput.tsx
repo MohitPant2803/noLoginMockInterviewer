@@ -14,53 +14,51 @@ export const ApiKeyInput: React.FC<ApiKeyInputProps> = ({ value, onChange, error
   return (
     <div className="space-y-2">
       <Input
-        label="Groq API Key"
+        label="Groq API key"
         type={showKey ? 'text' : 'password'}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="gsk_..."
         required
         error={error}
-        leftElement={<Key className="h-4 w-4" />}
+        leftElement={<Key className="h-3.5 w-3.5" />}
         rightElement={
           <button
             type="button"
             onClick={() => setShowKey(!showKey)}
-            className="p-1 hover:text-slate-200 transition-colors focus:outline-none"
+            className="p-1 text-text-muted hover:text-text-primary transition-colors focus-visible:outline-none"
             aria-label={showKey ? 'Mask API key' : 'Show API key'}
           >
-            {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            {showKey ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
           </button>
         }
       />
 
-      <div className="rounded-xl border border-slate-800/80 bg-slate-900/40 p-4 text-xs text-slate-400 space-y-2">
+      <div className="rounded border border-border-subtle bg-surface p-3.5 text-xs text-text-muted space-y-1.5">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5 font-semibold text-slate-300">
-            <ShieldCheck className="h-4 w-4 text-emerald-400" />
-            <span>Strict In-Memory Storage</span>
+          <div className="flex items-center gap-1.5 font-medium text-text-secondary">
+            <ShieldCheck className="h-3.5 w-3.5 text-status-success" />
+            <span>In-memory storage only</span>
           </div>
           <a
             href="https://console.groq.com/keys"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-indigo-400 hover:text-indigo-300 font-medium transition-colors"
+            className="inline-flex items-center gap-1 text-text-secondary hover:text-text-primary transition-colors"
           >
-            Get a Groq API key
+            <span>Obtain key from Groq console</span>
             <ExternalLink className="h-3 w-3" />
           </a>
         </div>
 
         <p className="leading-relaxed">
-          Your key resides strictly in client-side React memory. It is never persisted to disk,
-          localStorage, or sent to any telemetry server.
+          The API key resides in temporary browser memory and is never written to disk or sent to application servers.
         </p>
 
-        <div className="flex items-start gap-1.5 text-[11px] text-amber-400/90 pt-1 border-t border-slate-800/60">
-          <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5 text-amber-400" />
+        <div className="flex items-start gap-1.5 text-text-muted pt-1 border-t border-border-subtle">
+          <AlertTriangle className="h-3 w-3 shrink-0 mt-0.5 text-status-warning" />
           <span>
-            Format verification only: API key validity and inference quota will be confirmed directly
-            with Groq when starting your interview questions.
+            Key validity and quota will be verified directly with Groq on session start.
           </span>
         </div>
       </div>

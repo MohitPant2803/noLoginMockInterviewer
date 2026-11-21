@@ -6,7 +6,7 @@ import { Footer } from './Footer';
 
 export const RootLayout: React.FC = () => {
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 font-sans selection:bg-indigo-500/30 selection:text-indigo-200">
+    <div className="min-h-screen flex flex-col bg-canvas text-text-primary font-sans">
       <Header />
       <main className="flex-1 flex flex-col">
         <Outlet />
@@ -18,7 +18,7 @@ export const RootLayout: React.FC = () => {
         richColors
         closeButton
         toastOptions={{
-          className: 'bg-slate-900 border border-slate-800 text-slate-100',
+          className: 'bg-surface border border-border-strong text-text-primary rounded text-xs',
         }}
       />
     </div>

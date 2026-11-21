@@ -69,26 +69,25 @@ export const AnswerInput: React.FC<AnswerInputProps> = ({
   }, [isListening, voiceSupported, onStartRecording, onStopRecording, isDisabled]);
 
   return (
-    <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5 sm:p-6 space-y-4">
+    <div className="rounded border border-border-subtle bg-surface p-5 sm:p-6 space-y-4">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-300">
-          <Keyboard className="h-4 w-4 text-emerald-400" />
-          <span>Your Response</span>
+        <div className="flex items-center gap-2 text-xs font-medium text-text-secondary">
+          <Keyboard className="h-3.5 w-3.5 text-text-muted" />
+          <span>Candidate response</span>
         </div>
         {isListening && (
-          <span className="flex items-center gap-1.5 text-xs text-red-400 font-medium">
-            <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
-            Recording...
+          <span className="text-xs text-status-danger font-medium">
+            Recording
           </span>
         )}
         {isProcessing && (
-          <span className="flex items-center gap-1.5 text-xs text-indigo-400 font-medium">
+          <span className="flex items-center gap-1.5 text-xs text-accent-text font-normal">
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            {sessionStatus === 'evaluating' ? 'Evaluating answer...' : 'Generating next question...'}
+            {sessionStatus === 'evaluating' ? 'Evaluating answer...' : 'Generating follow-up...'}
           </span>
         )}
         {hasAnswered && !isProcessing && (
-          <span className="text-xs text-emerald-400 font-medium">✓ Answer submitted</span>
+          <span className="text-xs text-status-success font-medium">Answer submitted</span>
         )}
       </div>
 
@@ -110,19 +109,19 @@ export const AnswerInput: React.FC<AnswerInputProps> = ({
               : hasAnswered
                 ? 'Answer submitted'
                 : voiceSupported
-                  ? 'Press Space or the mic button to start recording, or type your answer here...'
+                  ? 'Press Space or the record button to speak, or type your answer here...'
                   : 'Type your answer here...'
           }
-          className={`w-full rounded-lg border bg-slate-950/70 p-4 text-sm leading-relaxed transition-colors resize-none focus:outline-none focus:ring-1 ${
+          className={`w-full rounded border bg-canvas p-3.5 text-sm leading-relaxed transition-colors resize-none focus:outline-none ${
             isListening
-              ? 'border-red-500/60 focus:ring-red-500 text-slate-100'
+              ? 'border-status-danger focus:border-status-danger text-text-primary'
               : hasAnswered
-                ? 'border-emerald-800/60 text-slate-300 cursor-default'
-                : 'border-slate-800 focus:border-indigo-500 focus:ring-indigo-500 text-slate-100'
-          } placeholder:text-slate-600`}
+                ? 'border-status-success-border text-text-secondary cursor-default'
+                : 'border-border-subtle focus:border-border-focus text-text-primary'
+          } placeholder:text-text-muted`}
         />
         {isListening && interimTranscript && (
-          <div className="absolute bottom-2 left-4 right-4 text-xs text-slate-500 italic truncate pointer-events-none">
+          <div className="absolute bottom-2 left-3.5 right-3.5 text-xs text-text-muted italic truncate pointer-events-none">
             Hearing: {interimTranscript}
           </div>
         )}
@@ -130,15 +129,14 @@ export const AnswerInput: React.FC<AnswerInputProps> = ({
 
       {/* Voice error */}
       {voiceError && (
-        <div className="p-2.5 rounded-lg bg-red-950/30 border border-red-900/40 text-xs text-red-300 flex items-start gap-2">
-          <AlertCircle className="h-3.5 w-3.5 text-red-400 shrink-0 mt-0.5" />
-          {voiceError}
+        <div className="p-2.5 rounded bg-status-danger-bg border border-status-danger-border text-xs text-status-danger flex items-start gap-2">
+          <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+          <span>{voiceError}</span>
         </div>
       )}
 
       {/* Controls */}
       <div className="flex flex-col sm:flex-row items-center gap-3 pt-1">
-        {/* Mic controls */}
         {voiceSupported && (
           <div className="flex items-center gap-2 w-full sm:w-auto">
             {!isListening ? (
@@ -150,7 +148,7 @@ export const AnswerInput: React.FC<AnswerInputProps> = ({
                 leftIcon={<Mic className="h-4 w-4" />}
                 className="flex-1 sm:flex-initial"
               >
-                Start Recording
+                Start recording
               </Button>
             ) : (
               <Button
@@ -160,17 +158,16 @@ export const AnswerInput: React.FC<AnswerInputProps> = ({
                 leftIcon={<MicOff className="h-4 w-4" />}
                 className="flex-1 sm:flex-initial"
               >
-                Stop Recording
+                Stop recording
               </Button>
             )}
           </div>
         )}
 
-        {/* Submit */}
-        <div className="flex items-center gap-2 w-full sm:w-auto sm:ml-auto">
+        <div className="flex items-center gap-3 w-full sm:w-auto sm:ml-auto">
           {voiceSupported && !isListening && !hasAnswered && !isProcessing && (
-            <span className="text-[11px] text-slate-500 hidden lg:inline">
-              Space = toggle mic
+            <span className="text-xs text-text-muted hidden lg:inline">
+              Space to toggle mic
             </span>
           )}
           <Button
@@ -179,10 +176,10 @@ export const AnswerInput: React.FC<AnswerInputProps> = ({
             onClick={onSubmit}
             disabled={!canSubmit}
             isLoading={isSubmitting}
-            leftIcon={!isSubmitting ? <Send className="h-4 w-4" /> : undefined}
+            leftIcon={!isSubmitting ? <Send className="h-3.5 w-3.5" /> : undefined}
             className="flex-1 sm:flex-initial"
           >
-            Submit Answer
+            Submit answer
           </Button>
         </div>
       </div>

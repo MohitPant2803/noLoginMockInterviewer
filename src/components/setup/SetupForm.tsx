@@ -7,11 +7,10 @@ import { toast } from 'sonner';
 import {
   Briefcase,
   HelpCircle,
-  ArrowRight,
   Clock,
   MessageSquare,
   Sparkles,
-  CheckCircle2,
+  Check,
   ListOrdered,
 } from 'lucide-react';
 
@@ -23,7 +22,7 @@ import {
   QUESTION_COUNT_OPTIONS,
   INSTRUCTION_PRESETS,
 } from '@/lib/constants';
-import { Button, Input, Textarea, Card, CardContent } from '@/components/ui';
+import { Button, Input, Textarea } from '@/components/ui';
 import { ResumeInput } from './ResumeInput';
 import { ApiKeyInput } from './ApiKeyInput';
 
@@ -164,8 +163,8 @@ export const SetupForm: React.FC = () => {
     // 5. Initialize fresh interview session
     resetSession();
 
-    toast.success('Interview configured successfully!', {
-      description: `Targeting: ${finalJobRole} (${data.questionCount} questions)`,
+    toast.success('Interview configured', {
+      description: `Target: ${finalJobRole} (${data.questionCount} questions)`,
     });
 
     // 6. Navigate to /interview
@@ -173,248 +172,240 @@ export const SetupForm: React.FC = () => {
   };
 
   return (
-    <Card className="max-w-3xl mx-auto border-slate-800 bg-slate-900/60 shadow-2xl backdrop-blur-sm">
-      <CardContent className="p-6 sm:p-10">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-          {/* SECTION 1: RESUME INPUT */}
-          <div className="space-y-2 border-b border-slate-800/80 pb-8">
-            <ResumeInput
-              source={resumeSource}
-              onSourceChange={(src) => {
-                setResumeSource(src);
-                setResumeError(null);
-              }}
-              selectedFile={selectedFile}
-              onFileSelect={(file) => {
-                setSelectedFile(file);
-                setResumeError(null);
-              }}
-              rawText={resumeText}
-              onRawTextChange={(text) => {
-                setResumeText(text);
-                setResumeError(null);
-              }}
-              error={resumeError || undefined}
-            />
+    <div className="rounded border border-border-subtle bg-surface p-6 sm:p-8">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+        {/* SECTION 1: RESUME INTAKE */}
+        <div className="border-b border-border-subtle pb-7">
+          <ResumeInput
+            source={resumeSource}
+            onSourceChange={(src) => {
+              setResumeSource(src);
+              setResumeError(null);
+            }}
+            selectedFile={selectedFile}
+            onFileSelect={(file) => {
+              setSelectedFile(file);
+              setResumeError(null);
+            }}
+            rawText={resumeText}
+            onRawTextChange={(text) => {
+              setResumeText(text);
+              setResumeError(null);
+            }}
+            error={resumeError || undefined}
+          />
+        </div>
+
+        {/* SECTION 2: JOB ROLE */}
+        <div className="space-y-3 border-b border-border-subtle pb-7">
+          <div>
+            <label htmlFor="roleSelect" className="block text-xs font-medium text-text-secondary">
+              Target job role <span className="text-status-danger">*</span>
+            </label>
+            <p className="text-xs text-text-muted mt-0.5">
+              Select your career track or enter a specialized position.
+            </p>
           </div>
 
-          {/* SECTION 2: JOB ROLE CONFIGURATION */}
-          <div className="space-y-4 border-b border-slate-800/80 pb-8">
-            <div>
-              <label htmlFor="roleSelect" className="block text-sm font-semibold text-slate-200">
-                Target Job Role <span className="text-red-400">*</span>
-              </label>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Select your target career track or specify a specialized role.
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              <div className="relative">
-                <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
-                  <Briefcase className="h-4 w-4" />
-                </div>
-                <select
-                  id="roleSelect"
-                  {...register('roleSelection')}
-                  className="w-full appearance-none rounded-lg border border-slate-800 bg-slate-900/90 pl-10 pr-10 py-2.5 text-sm text-slate-100 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
-                >
-                  {STANDARD_ROLES.map((role) => (
-                    <option key={role} value={role} className="bg-slate-900 text-slate-100">
-                      {role === 'Custom' ? '✨ Custom Role (Enter your own)' : role}
-                    </option>
-                  ))}
-                </select>
-                <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 text-xs">
-                  ▼
-                </div>
+          <div className="space-y-2">
+            <div className="relative">
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none">
+                <Briefcase className="h-3.5 w-3.5" />
               </div>
-
-              {/* Custom Role Input */}
-              {roleSelection === 'Custom' && (
-                <div className="pt-2 animate-in fade-in slide-in-from-top-1 duration-200">
-                  <Input
-                    label="Custom Job Role Title"
-                    placeholder="e.g. Senior Distributed Systems Engineer / Cloud Architect"
-                    required
-                    error={errors.customRole?.message}
-                    {...register('customRole')}
-                  />
-                </div>
-              )}
-              {errors.roleSelection && (
-                <p className="text-xs text-red-400">{errors.roleSelection.message}</p>
-              )}
-            </div>
-          </div>
-
-          {/* SECTION 3: INTERVIEW LENGTH / QUESTIONS */}
-          <div className="space-y-4 border-b border-slate-800/80 pb-8">
-            <div className="flex items-center justify-between">
-              <div>
-                <label className="block text-sm font-semibold text-slate-200 flex items-center gap-1.5">
-                  <ListOrdered className="h-4 w-4 text-indigo-400" />
-                  Interview Length <span className="text-red-400">*</span>
-                </label>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Main interview questions scheduled. Follow-up questions adapt dynamically.
-                </p>
+              <select
+                id="roleSelect"
+                {...register('roleSelection')}
+                className="w-full appearance-none rounded border border-border-subtle bg-canvas pl-9 pr-8 py-2 text-xs text-text-primary focus:border-border-focus focus:outline-none cursor-pointer"
+              >
+                {STANDARD_ROLES.map((role) => (
+                  <option key={role} value={role} className="bg-surface text-text-primary">
+                    {role === 'Custom' ? 'Custom role (specify below)' : role}
+                  </option>
+                ))}
+              </select>
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted text-[10px]">
+                ▼
               </div>
             </div>
 
-            {/* Visual Options Grid */}
-            <Controller
-              name="questionCount"
-              control={control}
-              render={({ field }) => (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-                  {QUESTION_COUNT_OPTIONS.map((opt) => {
-                    const isSelected = field.value === opt.count;
-                    return (
-                      <button
-                        type="button"
-                        key={opt.count}
-                        onClick={() => field.onChange(opt.count)}
-                        className={`p-3.5 rounded-xl border text-left transition-all relative ${
-                          isSelected
-                            ? 'border-indigo-500 bg-indigo-950/40 ring-1 ring-indigo-500'
-                            : 'border-slate-800 hover:border-slate-700 bg-slate-900/40 hover:bg-slate-900/70'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between mb-1.5">
-                          <span
-                            className={`font-semibold text-sm ${
-                              isSelected ? 'text-indigo-300' : 'text-slate-200'
-                            }`}
-                          >
-                            {opt.label}
-                          </span>
-                          {isSelected && (
-                            <CheckCircle2 className="h-4 w-4 text-indigo-400 shrink-0" />
-                          )}
-                        </div>
-                        <div className="flex items-center gap-1 text-[11px] text-slate-400 mb-1">
-                          <Clock className="h-3 w-3 text-slate-500" />
-                          <span>{opt.duration}</span>
-                        </div>
-                        <p className="text-[11px] text-slate-500 leading-tight">
-                          {opt.description}
-                        </p>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            />
-            {errors.questionCount && (
-              <p className="text-xs text-red-400">{errors.questionCount.message}</p>
+            {/* Custom Role Input */}
+            {roleSelection === 'Custom' && (
+              <div className="pt-1">
+                <Input
+                  label="Custom role title"
+                  placeholder="e.g. Distributed Systems Engineer / SRE"
+                  required
+                  error={errors.customRole?.message}
+                  {...register('customRole')}
+                />
+              </div>
+            )}
+            {errors.roleSelection && (
+              <p className="text-xs text-status-danger">{errors.roleSelection.message}</p>
             )}
           </div>
+        </div>
 
-          {/* SECTION 4: ADDITIONAL INSTRUCTIONS */}
-          <div className="space-y-3 border-b border-slate-800/80 pb-8">
-            <div>
-              <label
-                htmlFor="instructions"
-                className="block text-sm font-semibold text-slate-200 flex items-center gap-1.5"
-              >
-                <MessageSquare className="h-4 w-4 text-indigo-400" />
-                Additional Interviewer Instructions{' '}
-                <span className="text-xs font-normal text-slate-500">(Optional)</span>
-              </label>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Guide the AI interviewer on interview tone, technical difficulty, or emphasis.
-              </p>
-            </div>
-
-            <Textarea
-              id="instructions"
-              placeholder="e.g. Focus on distributed systems trade-offs and ask about production incidents..."
-              rows={3}
-              error={errors.additionalInstructions?.message}
-              {...register('additionalInstructions')}
-            />
-
-            {/* Quick preset chips */}
-            <div className="space-y-1.5 pt-1">
-              <span className="text-xs font-medium text-slate-400 flex items-center gap-1">
-                <Sparkles className="h-3 w-3 text-indigo-400" />
-                Click to add preset focus areas:
-              </span>
-              <div className="flex flex-wrap gap-1.5">
-                {INSTRUCTION_PRESETS.map((preset) => (
-                  <button
-                    type="button"
-                    key={preset}
-                    onClick={() => handleAppendInstruction(preset)}
-                    className="text-[11px] rounded-md bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/60 px-2.5 py-1 text-slate-300 transition-colors"
-                  >
-                    + {preset}
-                  </button>
-                ))}
-              </div>
-            </div>
+        {/* SECTION 3: INTERVIEW LENGTH */}
+        <div className="space-y-3 border-b border-border-subtle pb-7">
+          <div>
+            <label className="block text-xs font-medium text-text-secondary flex items-center gap-1.5">
+              <ListOrdered className="h-3.5 w-3.5 text-text-muted" />
+              Question count <span className="text-status-danger">*</span>
+            </label>
+            <p className="text-xs text-text-muted mt-0.5">
+              Number of main interview questions. Follow-up questions adapt dynamically.
+            </p>
           </div>
 
-          {/* SECTION 5: GROQ API KEY & MODEL */}
-          <div className="space-y-4">
-            <Controller
-              name="groqApiKey"
-              control={control}
-              render={({ field }) => (
-                <ApiKeyInput
-                  value={field.value}
-                  onChange={field.onChange}
-                  error={errors.groqApiKey?.message}
-                />
-              )}
-            />
-
-            <div className="space-y-1.5 pt-1">
-              <label htmlFor="groqModel" className="block text-xs font-semibold text-slate-300">
-                Inference Model
-              </label>
-              <div className="relative">
-                <select
-                  id="groqModel"
-                  {...register('groqModel')}
-                  className="w-full appearance-none rounded-lg border border-slate-800 bg-slate-900/90 px-3.5 py-2.5 text-xs text-slate-200 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
-                >
-                  {AVAILABLE_GROQ_MODELS.map((m) => (
-                    <option key={m.id} value={m.id} className="bg-slate-900 text-slate-100">
-                      {m.label} ({m.id})
-                    </option>
-                  ))}
-                </select>
-                <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 text-xs">
-                  ▼
-                </div>
+          <Controller
+            name="questionCount"
+            control={control}
+            render={({ field }) => (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                {QUESTION_COUNT_OPTIONS.map((opt) => {
+                  const isSelected = field.value === opt.count;
+                  return (
+                    <button
+                      type="button"
+                      key={opt.count}
+                      onClick={() => field.onChange(opt.count)}
+                      className={`p-3 rounded border text-left transition-colors cursor-pointer ${
+                        isSelected
+                          ? 'border-accent bg-accent-surface'
+                          : 'border-border-subtle hover:border-border-strong bg-canvas'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span
+                          className={`font-medium text-xs ${
+                            isSelected ? 'text-accent-text' : 'text-text-primary'
+                          }`}
+                        >
+                          {opt.label}
+                        </span>
+                        {isSelected && (
+                          <Check className="h-3.5 w-3.5 text-accent-text shrink-0" />
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1 text-[11px] text-text-muted">
+                        <Clock className="h-3 w-3 text-text-muted" />
+                        <span>{opt.duration}</span>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
-              <p className="text-[11px] text-slate-500">
-                Automatic fallback: If a model is deprecated or unreachable on your account tier, the system automatically routes to an available Groq model.
-              </p>
-            </div>
-          </div>
+            )}
+          />
+          {errors.questionCount && (
+            <p className="text-xs text-status-danger">{errors.questionCount.message}</p>
+          )}
+        </div>
 
-          {/* SUBMIT BUTTON */}
-          <div className="pt-6 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2 text-xs text-slate-400">
-              <HelpCircle className="h-4 w-4 text-slate-500 shrink-0" />
-              <span>All setup data is held in browser memory only.</span>
-            </div>
-
-            <Button
-              type="submit"
-              size="lg"
-              className="w-full sm:w-auto font-semibold shadow-lg shadow-indigo-600/25 px-8"
-              isLoading={isSubmitting}
-              rightIcon={<ArrowRight className="h-4 w-4" />}
+        {/* SECTION 4: ADDITIONAL INSTRUCTIONS */}
+        <div className="space-y-3 border-b border-border-subtle pb-7">
+          <div>
+            <label
+              htmlFor="instructions"
+              className="block text-xs font-medium text-text-secondary flex items-center gap-1.5"
             >
-              Start Interview
-            </Button>
+              <MessageSquare className="h-3.5 w-3.5 text-text-muted" />
+              Special focus instructions{' '}
+              <span className="text-[11px] text-text-muted">(optional)</span>
+            </label>
+            <p className="text-xs text-text-muted mt-0.5">
+              Guide the interviewer on depth, technical stacks, or interview rigor.
+            </p>
           </div>
-        </form>
-      </CardContent>
-    </Card>
+
+          <Textarea
+            id="instructions"
+            placeholder="e.g. Focus on distributed consensus and high-throughput streaming systems..."
+            rows={3}
+            error={errors.additionalInstructions?.message}
+            {...register('additionalInstructions')}
+          />
+
+          {/* Quick preset chips */}
+          <div className="space-y-1.5 pt-1">
+            <span className="text-[11px] text-text-muted flex items-center gap-1">
+              <Sparkles className="h-3 w-3 text-text-muted" />
+              Select focus preset:
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {INSTRUCTION_PRESETS.map((preset) => (
+                <button
+                  type="button"
+                  key={preset}
+                  onClick={() => handleAppendInstruction(preset)}
+                  className="text-xs rounded bg-surface-elevated hover:bg-surface-hover border border-border-subtle px-2 py-0.5 text-text-secondary transition-colors cursor-pointer"
+                >
+                  {preset}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* SECTION 5: GROQ CREDENTIALS & MODEL */}
+        <div className="space-y-3">
+          <Controller
+            name="groqApiKey"
+            control={control}
+            render={({ field }) => (
+              <ApiKeyInput
+                value={field.value}
+                onChange={field.onChange}
+                error={errors.groqApiKey?.message}
+              />
+            )}
+          />
+
+          <div className="space-y-1 pt-1">
+            <label htmlFor="groqModel" className="block text-xs font-medium text-text-secondary">
+              Inference model
+            </label>
+            <div className="relative">
+              <select
+                id="groqModel"
+                {...register('groqModel')}
+                className="w-full appearance-none rounded border border-border-subtle bg-canvas px-3 py-2 text-xs text-text-primary focus:border-border-focus focus:outline-none cursor-pointer"
+              >
+                {AVAILABLE_GROQ_MODELS.map((m) => (
+                  <option key={m.id} value={m.id} className="bg-surface text-text-primary">
+                    {m.label} ({m.id})
+                  </option>
+                ))}
+              </select>
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted text-[10px]">
+                ▼
+              </div>
+            </div>
+            <p className="text-[11px] text-text-muted">
+              Auto-fallback routes to an accessible model if the chosen model is unavailable on your tier.
+            </p>
+          </div>
+        </div>
+
+        {/* SUBMIT BUTTON */}
+        <div className="pt-4 border-t border-border-subtle flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-1.5 text-xs text-text-muted">
+            <HelpCircle className="h-3.5 w-3.5 text-text-muted shrink-0" />
+            <span>Session parameters reside exclusively in browser memory.</span>
+          </div>
+
+          <Button
+            type="submit"
+            size="md"
+            variant="primary"
+            isLoading={isSubmitting}
+            className="w-full sm:w-auto"
+          >
+            Start interview
+          </Button>
+        </div>
+      </form>
+    </div>
   );
 };

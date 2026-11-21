@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { PerformanceReport } from '@/types';
-import { Button, Card, CardContent, Badge } from '@/components/ui';
+import { Button, Badge } from '@/components/ui';
 import { generateReportPdf } from '@/services/pdfService';
 import { useConfigStore, useInterviewStore, useResumeStore, useReportStore } from '@/store';
 import { toast } from 'sonner';
@@ -29,7 +29,6 @@ export const ReportView: React.FC<ReportViewProps> = ({ report }) => {
   const navigate = useNavigate();
   const [isExporting, setIsExporting] = useState(false);
   const [expandedQuestions, setExpandedQuestions] = useState<Record<string, boolean>>(() => {
-    // Expand the first two by default
     const initial: Record<string, boolean> = {};
     report.questionBreakdowns.slice(0, 2).forEach((qb) => {
       initial[qb.questionId] = true;
@@ -45,9 +44,9 @@ export const ReportView: React.FC<ReportViewProps> = ({ report }) => {
     try {
       setIsExporting(true);
       generateReportPdf(report);
-      toast.success('PDF Report downloaded successfully!');
-    } catch (err) {
-      toast.error('Failed to generate PDF. Please try again.');
+      toast.success('PDF report downloaded');
+    } catch {
+      toast.error('Failed to generate PDF');
     } finally {
       setIsExporting(false);
     }
@@ -58,47 +57,47 @@ export const ReportView: React.FC<ReportViewProps> = ({ report }) => {
     useReportStore.getState().clearReport();
     useResumeStore.getState().clearResume();
     useConfigStore.getState().clearConfig();
-    toast.info('Session reset for a fresh interview.');
+    toast.info('Session reset for a fresh interview');
     navigate('/setup');
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return 'text-emerald-400';
-    if (score >= 60) return 'text-indigo-400';
-    if (score >= 40) return 'text-amber-400';
-    return 'text-red-400';
+    if (score >= 80) return 'text-status-success';
+    if (score >= 60) return 'text-accent-text';
+    if (score >= 40) return 'text-status-warning';
+    return 'text-status-danger';
   };
 
   const getScoreBadge = (score: number) => {
-    if (score >= 80) return { label: 'Strong Hire', variant: 'success' as const };
+    if (score >= 80) return { label: 'Strong hire', variant: 'success' as const };
     if (score >= 65) return { label: 'Hire', variant: 'info' as const };
-    if (score >= 50) return { label: 'Lean Hire / Borderline', variant: 'warning' as const };
-    return { label: 'Needs Practice', variant: 'outline' as const };
+    if (score >= 50) return { label: 'Borderline', variant: 'warning' as const };
+    return { label: 'Needs practice', variant: 'outline' as const };
   };
 
   const rating = getScoreBadge(report.overallScore);
 
   return (
-    <div className="max-w-4xl mx-auto w-full space-y-8 pb-12">
-      {/* ── Action Header Bar ── */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div className="max-w-container mx-auto w-full space-y-6 px-4 sm:px-6 py-6">
+      {/* Action Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-border-subtle pb-4">
         <Button
           variant="outline"
           size="sm"
           onClick={() => navigate('/setup')}
-          leftIcon={<ArrowLeft className="h-4 w-4" />}
+          leftIcon={<ArrowLeft className="h-3.5 w-3.5" />}
         >
-          Back to Setup
+          Setup
         </Button>
 
-        <div className="flex items-center gap-2.5 w-full sm:w-auto">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           <Button
             variant="secondary"
             size="sm"
             onClick={handleStartNew}
             leftIcon={<RotateCcw className="h-3.5 w-3.5" />}
           >
-            New Interview
+            New interview
           </Button>
 
           <Button
@@ -106,360 +105,269 @@ export const ReportView: React.FC<ReportViewProps> = ({ report }) => {
             size="sm"
             onClick={handleDownloadPdf}
             isLoading={isExporting}
-            leftIcon={<Download className="h-4 w-4" />}
-            className="shadow-sm shadow-indigo-600/30"
+            leftIcon={<Download className="h-3.5 w-3.5" />}
           >
-            Download PDF Report
+            Download PDF report
           </Button>
         </div>
       </div>
 
-      {/* ── Overall Performance Card ── */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6 md:p-8 backdrop-blur-sm shadow-xl">
+      {/* Overall Score Summary Plane */}
+      <div className="rounded border border-border-subtle bg-surface p-6">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="space-y-3 flex-1">
+          <div className="space-y-2 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
               <Badge variant="info">{report.jobRole}</Badge>
               <Badge variant={rating.variant}>{rating.label}</Badge>
-              <span className="text-xs text-slate-500">
+              <span className="text-xs text-text-muted">
                 Completed on {new Date(report.createdAt).toLocaleDateString()}
               </span>
             </div>
 
-            <h1 className="text-2xl md:text-3xl font-extrabold text-slate-100 tracking-tight">
-              Performance Evaluation Report
+            <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-text-primary">
+              Interview performance evaluation
             </h1>
 
-            <p className="text-sm text-slate-300 leading-relaxed max-w-2xl">
+            <p className="text-xs sm:text-sm text-text-secondary leading-relaxed max-w-2xl font-normal">
               {report.summary}
             </p>
 
-            <div className="flex items-center gap-4 text-xs text-slate-400 pt-2 flex-wrap">
+            <div className="flex items-center gap-4 text-xs text-text-muted pt-1 flex-wrap">
               <div className="flex items-center gap-1.5">
-                <Clock className="h-3.5 w-3.5 text-indigo-400" />
-                <span>Duration: ~{report.durationMinutes} min</span>
+                <Clock className="h-3.5 w-3.5 text-text-muted" />
+                <span>Duration: {report.durationMinutes} min</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <HelpCircle className="h-3.5 w-3.5 text-indigo-400" />
-                <span>{report.mainQuestionsCount} Main Questions</span>
+                <HelpCircle className="h-3.5 w-3.5 text-text-muted" />
+                <span>{report.mainQuestionsCount} main questions</span>
               </div>
               {report.followUpQuestionsCount > 0 && (
                 <div className="flex items-center gap-1.5">
-                  <MessageSquare className="h-3.5 w-3.5 text-cyan-400" />
-                  <span>{report.followUpQuestionsCount} Adaptive Follow-ups</span>
+                  <MessageSquare className="h-3.5 w-3.5 text-text-muted" />
+                  <span>{report.followUpQuestionsCount} adaptive follow-ups</span>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Overall Score Circle */}
-          <div className="flex flex-col items-center justify-center p-6 rounded-2xl bg-slate-950/80 border border-slate-800 shrink-0 min-w-[150px] shadow-inner text-center">
-            <span className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold mb-1">
-              Overall Score
+          {/* Numeric Score Box */}
+          <div className="flex flex-col items-center justify-center p-5 rounded border border-border-subtle bg-canvas shrink-0 min-w-[130px] text-center">
+            <span className="text-[11px] text-text-muted font-normal mb-1">
+              Overall score
             </span>
-            <span
-              className={`text-5xl font-extrabold tracking-tight ${getScoreColor(
-                report.overallScore
-              )}`}
-            >
+            <span className={`text-4xl font-bold tracking-tight ${getScoreColor(report.overallScore)}`}>
               {report.overallScore}
-              <span className="text-2xl text-slate-500 font-normal">/100</span>
+              <span className="text-lg text-text-muted font-normal">/100</span>
             </span>
-            <span className="text-[11px] text-slate-400 mt-2 font-medium">
+            <span className="text-[11px] text-text-secondary mt-1 font-medium">
               {rating.label}
             </span>
           </div>
         </div>
       </div>
 
-      {/* ── Skill Breakdown ── */}
+      {/* Evaluated Competency Breakdown */}
       {report.categoryScores && report.categoryScores.length > 0 && (
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <BarChart3 className="h-5 w-5 text-indigo-400" />
-            <h2 className="text-lg font-bold text-slate-100">Evaluated Skill Breakdown</h2>
+            <BarChart3 className="h-4 w-4 text-text-muted" />
+            <h2 className="text-sm font-semibold text-text-primary">Evaluated competency breakdown</h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
             {report.categoryScores.map((cat, idx) => (
-              <Card key={idx} className="border-slate-800 bg-slate-900/40">
-                <CardContent className="p-5 space-y-2.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-slate-200 uppercase tracking-wide">
-                      {cat.category}
-                    </span>
-                    <span className={`text-sm font-bold ${getScoreColor(cat.score)}`}>
-                      {cat.score}%
-                    </span>
-                  </div>
-                  <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all duration-700 ${
-                        cat.score >= 70
-                          ? 'bg-emerald-500'
-                          : cat.score >= 50
-                          ? 'bg-indigo-500'
-                          : 'bg-amber-500'
-                      }`}
-                      style={{ width: `${Math.min(cat.score, 100)}%` }}
-                    />
-                  </div>
-                  <p className="text-xs text-slate-400 leading-relaxed pt-1">
-                    {cat.feedback}
-                  </p>
-                </CardContent>
-              </Card>
+              <div key={idx} className="rounded border border-border-subtle bg-surface p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-text-secondary">
+                    {cat.category}
+                  </span>
+                  <span className={`text-xs font-semibold ${getScoreColor(cat.score)}`}>
+                    {cat.score}%
+                  </span>
+                </div>
+                <div className="w-full bg-surface-muted h-1.5 rounded overflow-hidden">
+                  <div
+                    className={`h-full rounded ${
+                      cat.score >= 70
+                        ? 'bg-status-success'
+                        : cat.score >= 50
+                        ? 'bg-accent'
+                        : 'bg-status-warning'
+                    }`}
+                    style={{ width: `${Math.min(cat.score, 100)}%` }}
+                  />
+                </div>
+                <p className="text-xs text-text-muted leading-relaxed pt-0.5">
+                  {cat.feedback}
+                </p>
+              </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* ── Strengths & Areas of Improvement ── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Strengths & Improvement Areas */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Strengths */}
-        <Card className="border-slate-800 bg-slate-900/40">
-          <CardContent className="p-6 space-y-4">
-            <h3 className="text-sm font-bold text-emerald-400 flex items-center gap-2 uppercase tracking-wide">
-              <CheckCircle className="h-4 w-4 shrink-0" />
-              Demonstrated Strengths
-            </h3>
-            <ul className="space-y-2.5 text-xs text-slate-300">
-              {report.strengths.map((str, idx) => (
-                <li key={idx} className="flex items-start gap-2.5">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 mt-1.5 shrink-0" />
-                  <span className="leading-relaxed">{str}</span>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
+        <div className="rounded border border-border-subtle bg-surface p-5 space-y-3">
+          <h3 className="text-xs font-semibold text-status-success flex items-center gap-1.5">
+            <CheckCircle className="h-3.5 w-3.5 shrink-0" />
+            <span>Demonstrated strengths</span>
+          </h3>
+          <ul className="space-y-2 text-xs text-text-secondary">
+            {report.strengths.map((str, idx) => (
+              <li key={idx} className="flex items-start gap-2">
+                <span className="text-status-success mt-0.5">•</span>
+                <span className="leading-relaxed">{str}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
 
         {/* Improvements */}
-        <Card className="border-slate-800 bg-slate-900/40">
-          <CardContent className="p-6 space-y-4">
-            <h3 className="text-sm font-bold text-amber-400 flex items-center gap-2 uppercase tracking-wide">
-              <AlertTriangle className="h-4 w-4 shrink-0" />
-              Areas for Improvement
-            </h3>
-            <ul className="space-y-2.5 text-xs text-slate-300">
-              {report.areasForImprovement.map((imp, idx) => (
-                <li key={idx} className="flex items-start gap-2.5">
-                  <span className="h-1.5 w-1.5 rounded-full bg-amber-400 mt-1.5 shrink-0" />
-                  <span className="leading-relaxed">{imp}</span>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
+        <div className="rounded border border-border-subtle bg-surface p-5 space-y-3">
+          <h3 className="text-xs font-semibold text-status-warning flex items-center gap-1.5">
+            <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+            <span>Areas for improvement</span>
+          </h3>
+          <ul className="space-y-2 text-xs text-text-secondary">
+            {report.areasForImprovement.map((imp, idx) => (
+              <li key={idx} className="flex items-start gap-2">
+                <span className="text-status-warning mt-0.5">•</span>
+                <span className="leading-relaxed">{imp}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
 
-      {/* ── Actionable Recommendations ── */}
+      {/* Recommendations */}
       {report.recommendations && report.recommendations.length > 0 && (
-        <Card className="border-slate-800 bg-slate-900/40">
-          <CardContent className="p-6 space-y-4">
-            <h3 className="text-sm font-bold text-indigo-400 flex items-center gap-2 uppercase tracking-wide">
-              <Sparkles className="h-4 w-4 shrink-0" />
-              Tailored Recommendations & Preparation Guide
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-              {report.recommendations.map((rec, idx) => (
-                <div
-                  key={idx}
-                  className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800/80 text-slate-300 flex items-start gap-2.5 leading-relaxed"
-                >
-                  <span className="font-mono text-indigo-400 font-bold shrink-0">
-                    {idx + 1}.
-                  </span>
-                  <span>{rec}</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <div className="rounded border border-border-subtle bg-surface p-5 space-y-3">
+          <h3 className="text-xs font-semibold text-text-primary flex items-center gap-1.5">
+            <Sparkles className="h-3.5 w-3.5 text-text-muted shrink-0" />
+            <span>Preparation recommendations</span>
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+            {report.recommendations.map((rec, idx) => (
+              <div
+                key={idx}
+                className="p-3 rounded border border-border-subtle bg-canvas text-text-secondary flex items-start gap-2 leading-relaxed"
+              >
+                <span className="font-mono text-text-muted font-normal shrink-0">
+                  {idx + 1}.
+                </span>
+                <span>{rec}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
-      {/* ── Question-by-Question Deep Dive ── */}
-      <div className="space-y-4">
+      {/* Question Analysis Accordion */}
+      <div className="space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <FileCheck className="h-5 w-5 text-indigo-400" />
-            <h2 className="text-lg font-bold text-slate-100">
-              Question-by-Question Analysis
+            <FileCheck className="h-4 w-4 text-text-muted" />
+            <h2 className="text-sm font-semibold text-text-primary">
+              Question-by-question analysis
             </h2>
           </div>
-          <span className="text-xs text-slate-400">
+          <span className="text-xs text-text-muted">
             {report.questionBreakdowns.length} questions evaluated
           </span>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-2">
           {report.questionBreakdowns.map((qb, idx) => {
             const isExpanded = Boolean(expandedQuestions[qb.questionId]);
             return (
-              <Card
+              <div
                 key={qb.questionId || idx}
-                className="border-slate-800 bg-slate-900/40 overflow-hidden transition-all"
+                className="rounded border border-border-subtle bg-surface overflow-hidden transition-colors"
               >
-                {/* Accordion header */}
                 <button
                   type="button"
                   onClick={() => toggleQuestion(qb.questionId)}
-                  className="w-full p-4 sm:p-5 flex items-start sm:items-center justify-between gap-3 text-left hover:bg-slate-800/30 transition-colors"
+                  className="w-full p-4 flex items-center justify-between gap-3 text-left hover:bg-surface-hover transition-colors cursor-pointer"
                 >
-                  <div className="flex items-start sm:items-center gap-3 flex-1 overflow-hidden">
-                    <span className="text-xs font-mono font-bold px-2 py-1 rounded bg-slate-800 text-slate-300 shrink-0">
+                  <div className="flex items-center gap-2.5 flex-1 overflow-hidden">
+                    <span className="text-xs font-mono text-text-muted shrink-0">
                       Q{idx + 1}
                     </span>
-                    <div className="overflow-hidden">
-                      <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
-                          {qb.category}
-                        </span>
-                        {qb.isFollowUp && (
-                          <Badge variant="info" className="text-[10px]">
-                            Follow-up
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-sm font-medium text-slate-200 truncate">
+                    <div className="overflow-hidden flex items-center gap-2 flex-wrap">
+                      <span className="text-xs text-text-muted">
+                        {qb.category}
+                      </span>
+                      {qb.isFollowUp && (
+                        <Badge variant="info" className="text-[10px]">
+                          Follow-up
+                        </Badge>
+                      )}
+                      <span className="text-xs text-text-primary font-medium truncate max-w-md">
                         {qb.questionText}
-                      </p>
+                      </span>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 shrink-0 ml-2">
-                    <span
-                      className={`text-sm font-bold ${getScoreColor(qb.score)}`}
-                    >
+                  <div className="flex items-center gap-2.5 shrink-0 ml-2">
+                    <span className={`text-xs font-semibold ${getScoreColor(qb.score)}`}>
                       {qb.score}%
                     </span>
                     {isExpanded ? (
-                      <ChevronUp className="h-4 w-4 text-slate-400" />
+                      <ChevronUp className="h-3.5 w-3.5 text-text-muted" />
                     ) : (
-                      <ChevronDown className="h-4 w-4 text-slate-400" />
+                      <ChevronDown className="h-3.5 w-3.5 text-text-muted" />
                     )}
                   </div>
                 </button>
 
-                {/* Accordion Body */}
                 {isExpanded && (
-                  <div className="px-4 pb-5 sm:px-6 sm:pb-6 border-t border-slate-800/80 space-y-4 pt-4 text-xs">
-                    {/* Full question */}
-                    <div className="rounded-lg bg-slate-950/60 p-3.5 border border-slate-800/60">
-                      <span className="text-[11px] font-semibold uppercase text-slate-500 block mb-1">
-                        Question
+                  <div className="px-4 pb-4 border-t border-border-subtle space-y-3 pt-3 text-xs">
+                    <div className="rounded bg-canvas p-3 border border-border-subtle space-y-1">
+                      <span className="text-[11px] text-text-muted font-normal block">
+                        Full question
                       </span>
-                      <p className="text-sm text-slate-200 leading-relaxed">
+                      <p className="text-xs text-text-primary leading-relaxed font-medium">
                         {qb.questionText}
                       </p>
                     </div>
 
-                    {/* Candidate's answer */}
-                    <div className="rounded-lg bg-slate-950/60 p-3.5 border border-slate-800/60">
-                      <span className="text-[11px] font-semibold uppercase text-slate-500 block mb-1">
-                        Your Submitted Answer
+                    <div className="rounded bg-canvas p-3 border border-border-subtle space-y-1">
+                      <span className="text-[11px] text-text-muted font-normal block">
+                        Your answer
                       </span>
-                      <p className="text-slate-300 leading-relaxed font-sans whitespace-pre-wrap">
+                      <p className="text-xs text-text-secondary leading-relaxed whitespace-pre-wrap">
                         {qb.candidateAnswer || '(No answer provided)'}
                       </p>
                     </div>
 
-                    {/* Feedback & critique */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {qb.strengths && qb.strengths.length > 0 && (
-                        <div className="p-3.5 rounded-lg bg-emerald-950/20 border border-emerald-900/40 space-y-1">
-                          <span className="text-[11px] font-semibold text-emerald-400 uppercase">
-                            What you did well
-                          </span>
-                          <ul className="space-y-1 text-slate-300 pt-1">
-                            {qb.strengths.map((s, si) => (
-                              <li key={si} className="flex items-start gap-1.5">
-                                <span className="text-emerald-400">•</span>
-                                <span>{s}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-
-                      {qb.missingConcepts && qb.missingConcepts.length > 0 && (
-                        <div className="p-3.5 rounded-lg bg-amber-950/20 border border-amber-900/40 space-y-1">
-                          <span className="text-[11px] font-semibold text-amber-400 uppercase">
-                            Missing concepts or blindspots
-                          </span>
-                          <ul className="space-y-1 text-slate-300 pt-1">
-                            {qb.missingConcepts.map((m, mi) => (
-                              <li key={mi} className="flex items-start gap-1.5">
-                                <span className="text-amber-400">•</span>
-                                <span>{m}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Interviewer Feedback */}
                     {qb.feedback && (
-                      <div className="rounded-lg bg-slate-950/60 p-3.5 border border-slate-800/60 space-y-1">
-                        <span className="text-[11px] font-semibold uppercase text-slate-400 block">
-                          Interviewer Feedback
+                      <div className="rounded bg-canvas p-3 border border-border-subtle space-y-1">
+                        <span className="text-[11px] text-text-muted font-normal block">
+                          Evaluation feedback
                         </span>
-                        <p className="text-slate-300 leading-relaxed">
+                        <p className="text-xs text-text-secondary leading-relaxed">
                           {qb.feedback}
                         </p>
                       </div>
                     )}
 
-                    {/* Model Answer Suggestion */}
                     {qb.suggestedAnswer && (
-                      <div className="rounded-lg bg-indigo-950/20 p-3.5 border border-indigo-900/40 space-y-1">
-                        <span className="text-[11px] font-semibold uppercase text-indigo-400 block">
-                          Suggested Stronger Model Answer
+                      <div className="rounded bg-accent-surface p-3 border border-accent-border space-y-1">
+                        <span className="text-[11px] text-accent-text font-normal block">
+                          Model answer suggestion
                         </span>
-                        <p className="text-slate-200 leading-relaxed">
+                        <p className="text-xs text-text-primary leading-relaxed">
                           {qb.suggestedAnswer}
                         </p>
                       </div>
                     )}
                   </div>
                 )}
-              </Card>
+              </div>
             );
           })}
-        </div>
-      </div>
-
-      {/* ── Bottom Controls ── */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-800">
-        <Button
-          variant="outline"
-          size="md"
-          onClick={() => navigate('/setup')}
-          leftIcon={<ArrowLeft className="h-4 w-4" />}
-        >
-          Return to Setup
-        </Button>
-
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          <Button
-            variant="secondary"
-            size="md"
-            onClick={handleStartNew}
-            leftIcon={<RotateCcw className="h-4 w-4" />}
-          >
-            Start Fresh Interview
-          </Button>
-
-          <Button
-            variant="primary"
-            size="md"
-            onClick={handleDownloadPdf}
-            isLoading={isExporting}
-            leftIcon={<Download className="h-4 w-4" />}
-          >
-            Download PDF
-          </Button>
         </div>
       </div>
     </div>
